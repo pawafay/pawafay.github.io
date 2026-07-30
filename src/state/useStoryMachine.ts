@@ -1,6 +1,17 @@
 import { useCallback, useEffect, useMemo, useReducer } from 'react'
+import { config } from '../config'
 import { storyReducer } from './storyReducer'
-import { INITIAL_STATE, type Phase } from './phases'
+import { INITIAL_STATE, type Phase, type StoryState } from './phases'
+
+// Where the story opens. `showIntro: false` skips the dark scene entirely —
+// those phases are never entered, so no timer ever fires for them. Resolved once
+// at module load rather than per render, because useReducer only ever reads its
+// initial state on the first one.
+//
+// `flipped` stays false on purpose: it means "the switch has been flipped", and
+// it hasn't. Only DarkScene reads it, and DarkScene never mounts here.
+const START: StoryState =
+  config.showIntro === false ? { ...INITIAL_STATE, phase: 'PARTY' } : INITIAL_STATE
 
 // Purely time-driven transitions (callback/gesture ones live in components).
 const AUTO_TIMERS: Partial<Record<Phase, { ms: number; to: Phase }>> = {
@@ -11,7 +22,7 @@ const AUTO_TIMERS: Partial<Record<Phase, { ms: number; to: Phase }>> = {
 }
 
 export function useStoryMachine(reducedMotion: boolean) {
-  const [state, dispatch] = useReducer(storyReducer, INITIAL_STATE)
+  const [state, dispatch] = useReducer(storyReducer, START)
 
   // One timer per phase; cleared whenever the phase changes.
   useEffect(() => {

@@ -43,6 +43,24 @@ function StoryExperience() {
     machine.flip()
   }, [audio, machine])
 
+  // Flipping the switch is what unlocks the music — but there is no switch when
+  // `config.showIntro` is false, and none was flipped when a mailbox link
+  // dropped someone straight into the party. Fall back to the first gesture
+  // anywhere, which is the least a browser will accept. unlock() is a no-op once
+  // the track is playing, and it deliberately leaves `ready` false when play()
+  // is rejected, so a browser that won't count pointerdown gets another go.
+  const { ready: audioReady, unlock: unlockAudio } = audio
+  useEffect(() => {
+    if (!showParty || audioReady) return
+    const tryUnlock = () => unlockAudio()
+    window.addEventListener('pointerdown', tryUnlock)
+    window.addEventListener('keydown', tryUnlock)
+    return () => {
+      window.removeEventListener('pointerdown', tryUnlock)
+      window.removeEventListener('keydown', tryUnlock)
+    }
+  }, [showParty, audioReady, unlockAudio])
+
   // Warm every party asset while the dark intro plays, so flipping the switch
   // reveals the party (photos, code, music) with no delay.
   useEffect(() => {

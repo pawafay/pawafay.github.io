@@ -14,6 +14,12 @@ export const config: StoryConfig = {
   friendName: 'Pawa Babi 🐖🐷',
   age: 20,
 
+  // — The dark intro (candle → light switch → the two typed lines).
+  //   false → the page opens straight into the lit party. Note that the switch
+  //   is what unlocks the music, so with the intro off it starts on the first
+  //   tap or key press anywhere on the page instead. —
+  showIntro: false,
+
   // — Hero photo (centre stage). Omit `heroPhoto` to use the placeholder.
   heroPhoto: 'images/main_photo.jpg',
 

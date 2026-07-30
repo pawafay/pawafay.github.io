@@ -51,6 +51,15 @@ export interface ThemeOverrides {
 export interface StoryConfig {
   friendName: string
   age?: number
+  /**
+   * The dark intro — candle, light switch, the two typed lines.
+   * `false` opens straight into the lit party. Defaults to `true`.
+   *
+   * With the intro off there is no switch to flip, so the music waits for the
+   * first tap or key press instead (browsers refuse to start audio before a
+   * gesture, whatever we do).
+   */
+  showIntro?: boolean
   /** Hero photo path under /public; omit → drawn placeholder. */
   heroPhoto?: string
   stickers: StickerConfig[]
