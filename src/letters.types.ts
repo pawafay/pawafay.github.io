@@ -16,7 +16,7 @@ export interface LetterEntry {
   title?: string
   /** The issue this letter came from, when written by sync-letters.yml. */
   issue?: number
-  /** Body paragraphs, already split on blank lines. */
+  /** Body paragraphs, split on blank lines. Newlines within one are line breaks. */
   paragraphs: string[]
   /** At most MAX_PHOTOS, ordered by filename. */
   photos: LetterPhoto[]

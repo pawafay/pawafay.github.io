@@ -62,12 +62,19 @@ envelope.
 title: The first one
 ---
 
-First paragraph. Blank lines separate paragraphs — a single newline
-just wraps, so you can keep lines short in the editor.
+A line ends where you end it.
+This shows up on its own line, not tacked onto the one above.
+
+A blank line starts a new paragraph, with more space above it.
 
 You can use **bold** and *italic*. Nothing else: no links, no headings,
 no HTML. Anything else shows up as literal text.
 ```
+
+Line breaks are kept exactly as typed — unlike markdown, which would reflow a
+single newline into the line before it. Only a *blank* line makes a new
+paragraph. Same when you write the letter as an issue: the letter lands on the
+site laid out the way you typed it into GitHub.
 
 ### Frontmatter keys
 
