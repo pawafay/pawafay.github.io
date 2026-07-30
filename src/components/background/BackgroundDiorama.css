@@ -1,0 +1,85 @@
+.diorama {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* back wall: warm cream gradient (overscanned so parallax never reveals edges) */
+.diorama__wall {
+  position: absolute;
+  inset: -5% -5% 26% -5%;
+  background: radial-gradient(120% 80% at 50% 0%, #fff6e2 0%, #f3e2bf 55%, #e9d2a6 100%);
+  transform: translate(calc(var(--px, 0) * -10px), calc(var(--py, 0) * -7px));
+  transition: transform 0.3s ease-out;
+}
+
+/* floor: kraft, slightly darker, recedes */
+.diorama__floor {
+  position: absolute;
+  inset: 72% -5% -5% -5%;
+  background: linear-gradient(180deg, #d9b486 0%, #c69b66 100%);
+  transform: translate(calc(var(--px, 0) * -6px), calc(var(--py, 0) * -4px));
+  transition: transform 0.3s ease-out;
+}
+
+/* the pop-up book fold where wall meets floor */
+.diorama__gutter {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 72%;
+  height: 26px;
+  translate: 0 -50%;
+  background: linear-gradient(180deg, rgba(80, 55, 30, 0.35), rgba(80, 55, 30, 0));
+  filter: blur(3px);
+}
+
+.diorama__vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(130% 100% at 50% 40%, transparent 55%, rgba(70, 45, 20, 0.28) 100%);
+}
+
+/* bunting */
+.diorama__bunting {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 12vh;
+}
+.diorama__flags {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 12vh;
+  transform: translate(calc(var(--px, 0) * 9px), calc(var(--py, 0) * 3px));
+  transition: transform 0.3s ease-out;
+}
+.diorama__flag {
+  position: absolute;
+  width: clamp(18px, 5vw, 30px);
+  height: clamp(22px, 6vw, 36px);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transform-origin: 50% 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  animation: string-light-drift 3.5s ease-in-out infinite;
+}
+
+/* bokeh */
+.diorama__bokeh {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 240, 200, 0.9), rgba(255, 215, 150, 0.1));
+  animation: bokeh-twinkle 4.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .diorama__flag,
+  .diorama__bokeh {
+    animation: none;
+  }
+}

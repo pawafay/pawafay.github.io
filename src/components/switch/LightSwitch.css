@@ -1,0 +1,122 @@
+.light-switch {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  padding: 10px;
+  background: none;
+  touch-action: manipulation;
+}
+
+.light-switch__plate {
+  position: relative;
+  width: clamp(74px, 22vw, 96px);
+  aspect-ratio: 5 / 7;
+  border-radius: 12px;
+  background: linear-gradient(155deg, #efe6d2 0%, #dcccab 60%, #c9b489 100%);
+  box-shadow:
+    inset 0 2px 3px rgba(255, 255, 255, 0.7),
+    inset 0 -4px 8px rgba(120, 92, 54, 0.35),
+    0 10px 24px rgba(0, 0, 0, 0.45);
+  transition: box-shadow 0.4s ease;
+}
+
+.light-switch__screw {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff7e6, #9c8157);
+  box-shadow: inset 0 0 0 1px rgba(90, 70, 40, 0.4);
+}
+.light-switch__screw::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-top: 1px solid rgba(80, 60, 35, 0.6);
+  rotate: 35deg;
+}
+.light-switch__screw--tl {
+  top: 7px;
+  left: 50%;
+  translate: -50% 0;
+}
+.light-switch__screw--br {
+  bottom: 7px;
+  left: 50%;
+  translate: -50% 0;
+}
+
+.light-switch__slot {
+  position: absolute;
+  inset: 22% 32%;
+  border-radius: 7px;
+  background: linear-gradient(to bottom, #2b2018, #4a3a2c);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+.light-switch__rocker {
+  position: absolute;
+  inset: 5%;
+  border-radius: 5px;
+  transform-origin: 50% 100%;
+  transition: transform 0.32s var(--ease-pop);
+  /* OFF: tilted down (bottom pressed in) */
+  transform: perspective(220px) rotateX(-18deg);
+}
+.light-switch__rocker-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 5px;
+  background: linear-gradient(to bottom, #f3e8cf 0%, #d8c39c 100%);
+  box-shadow:
+    inset 0 2px 2px rgba(255, 255, 255, 0.8),
+    inset 0 -3px 5px rgba(120, 92, 54, 0.4);
+}
+
+/* ON: tilted up (top pressed in), plate brightens, halo blooms */
+.light-switch.is-on .light-switch__rocker {
+  transform: perspective(220px) rotateX(16deg);
+}
+.light-switch.is-on .light-switch__plate {
+  box-shadow:
+    inset 0 2px 3px rgba(255, 255, 255, 0.9),
+    inset 0 -4px 8px rgba(120, 92, 54, 0.25),
+    0 0 30px rgba(255, 196, 110, 0.7),
+    0 10px 24px rgba(0, 0, 0, 0.3);
+}
+
+.light-switch__halo {
+  position: absolute;
+  inset: -40%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 200, 120, 0.5), transparent 65%);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+.light-switch.is-on .light-switch__halo {
+  opacity: 1;
+}
+
+/* gentle attention nudge before it's flipped */
+.light-switch:not(.is-on) .light-switch__plate {
+  animation: switch-bob 2.4s ease-in-out infinite;
+}
+@keyframes switch-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .light-switch:not(.is-on) .light-switch__plate {
+    animation: none;
+  }
+  .light-switch__rocker {
+    transition: none;
+  }
+}

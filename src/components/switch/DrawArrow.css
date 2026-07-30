@@ -1,0 +1,30 @@
+.draw-arrow {
+  width: clamp(84px, 22vw, 132px);
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 0 10px rgba(255, 157, 77, 0.55));
+}
+
+.draw-arrow__shaft {
+  stroke-dasharray: 170;
+  stroke-dashoffset: 170;
+}
+.draw-arrow__head {
+  stroke-dasharray: 50;
+  stroke-dashoffset: 50;
+}
+
+.draw-arrow.is-drawing .draw-arrow__shaft {
+  animation: arrow-draw 0.7s var(--ease-soft) forwards;
+}
+.draw-arrow.is-drawing .draw-arrow__head {
+  animation: arrow-draw 0.3s ease-out 0.6s forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .draw-arrow.is-drawing .draw-arrow__shaft,
+  .draw-arrow.is-drawing .draw-arrow__head {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}

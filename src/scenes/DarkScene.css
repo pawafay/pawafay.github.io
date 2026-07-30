@@ -1,0 +1,78 @@
+.dark-scene {
+  position: absolute;
+  inset: 0;
+  opacity: 1;
+  transition: opacity 0.9s ease;
+}
+.dark-scene.is-igniting {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dark-scene__stack {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(1.5rem, 5vh, 3.5rem);
+  padding: max(env(safe-area-inset-top), 4vh) 1.25rem max(env(safe-area-inset-bottom), 4vh);
+  text-align: center;
+}
+
+.dark-scene__dialogue {
+  min-height: clamp(3.5rem, 12vh, 6rem);
+  display: grid;
+  place-items: center;
+}
+
+.dark-scene__hint {
+  font-size: clamp(1.25rem, 5vw, 2.1rem);
+  color: #ecdcbb;
+}
+
+.dark-scene__candle {
+  opacity: 0;
+  translate: 0 14px;
+  transition:
+    opacity 0.8s ease,
+    translate 0.9s var(--ease-soft);
+}
+.dark-scene__candle.is-visible {
+  opacity: 1;
+  translate: 0 0;
+}
+
+.dark-scene__switch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0;
+  translate: 0 16px;
+  transition:
+    opacity 0.7s ease,
+    translate 0.8s var(--ease-pop);
+}
+.dark-scene__switch.is-visible {
+  opacity: 1;
+  translate: 0 0;
+}
+
+.dark-scene__arrow {
+  position: absolute;
+  right: calc(100% - 10px);
+  bottom: 38%;
+  pointer-events: none;
+}
+
+/* On short landscape phones, tighten the vertical rhythm so nothing clips. */
+@media (max-height: 560px) {
+  .dark-scene__stack {
+    gap: clamp(0.75rem, 3vh, 1.5rem);
+  }
+  .dark-scene__candle {
+    scale: 0.8;
+  }
+}
