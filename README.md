@@ -67,11 +67,16 @@ handling. Renaming the repo to anything else turns it back into a project site
 served from `/<repo>/`, which means setting `base: '/<repo>/'` or every asset 404s.
 
 1. In the repo: **Settings → Pages → Build and deployment → Source = "GitHub
-   Actions"** (one-time). **This is required** — if Source is left as "Deploy from
-   a branch", Pages serves the raw source (`/src/main.tsx`) instead of the build
-   and the page renders blank. The workflow passes `enablement: true` to
-   `configure-pages`, which sets this automatically on the first successful run;
-   set it by hand if that step ever fails.
+   Actions"**. **Do this before trusting the first deploy.** Because this repo is
+   named `<login>.github.io`, GitHub turns Pages on by itself the moment you first
+   push and defaults it to _"Deploy from a branch"_ — which serves the raw
+   repository, so the page renders blank with a MIME-type error for
+   `/src/main.tsx`. Worse, that branch build races this workflow and, finishing a
+   few seconds later, silently overwrites the correct deploy. Switching Source to
+   "GitHub Actions" retires the branch build for good.
+   (`configure-pages` is passed `enablement: true`, which turns Pages on when it is
+   off — but it will **not** convert an already-enabled site from branch to
+   workflow, so it cannot save you here.)
 2. Push to the `main` branch.
 3. The included workflow ([.github/workflows/deploy.yml](.github/workflows/deploy.yml))
    builds with Bun and deploys `dist/` automatically.

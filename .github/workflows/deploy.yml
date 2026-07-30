@@ -34,8 +34,10 @@ jobs:
       - name: Build
         run: bun run build
 
-      # `enablement: true` turns Pages on (Source = "GitHub Actions") the first time this
-      # runs, so a fresh repo needs no manual Settings → Pages step.
+      # `enablement: true` switches Pages on when it is off. It does NOT convert a site
+      # that is already enabled from "Deploy from a branch" over to "GitHub Actions" — and
+      # a <login>.github.io repo gets branch deploys enabled automatically on the first
+      # push, so that one has to be flipped by hand in Settings → Pages. See the README.
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
