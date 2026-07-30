@@ -12,3 +12,7 @@ yarn.lock
 
 # Static assets
 public
+
+# Letters are prose — keep them exactly as they were typed (or committed by the
+# issue-sync workflow), never reflowed.
+src/letters

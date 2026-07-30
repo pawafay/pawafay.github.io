@@ -1,0 +1,237 @@
+/* A mailbox letter, full-screen.
+
+   This renders in a portal on document.body, i.e. OUTSIDE .story-stage — so the
+   lighting-aware tokens (--surface-*, --text-*) do not resolve here. Only :root
+   tokens and literal colours below, same constraint (and same reason) as
+   Letter.css. The mailbox is only reachable from the lit party, so the palette
+   is pinned to its lit values. */
+
+.mail-letter-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  /* Flex, not grid: an auto-sized grid row grows to the sheet's content height,
+     so `height: 100%` on the sheet's parent resolves against the *content* and
+     the sheet never becomes scrollable. A column flex container has a definite
+     height here (inset: 0), so percentages resolve against the viewport. */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  perspective: 900px;
+  perspective-origin: 50% 100%;
+  /* A warm room rather than a dark scrim: this is a takeover, not a modal. */
+  background:
+    radial-gradient(120% 80% at 50% 108%, rgba(255, 210, 122, 0.5), transparent 62%),
+    radial-gradient(90% 60% at 12% 0%, rgba(232, 114, 140, 0.16), transparent 70%),
+    linear-gradient(178deg, #efe0c2 0%, #f6ead2 48%, #e6d2ae 100%);
+  animation: fade-in 0.26s ease both;
+}
+
+.mail-letter {
+  position: relative;
+  flex: 0 0 auto;
+  width: min(96vw, 620px);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+/* ---- the envelope mouth the paper is pulled out of ---- */
+.mail-letter__mouth {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 104%;
+  height: 4.5rem;
+  translate: -50% 0;
+  transform-style: preserve-3d;
+  background: linear-gradient(160deg, #e8cfa3 0%, #d9b486 60%, #c69b66 100%);
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 -4px 16px rgba(60, 35, 15, 0.32);
+  /* In front of the sheet, so the paper reads as sliding out from behind it.
+     It fades to nothing, but the element stays — hence pointer-events: none, or
+     it would silently eat scrolls and taps along the bottom of the letter. */
+  z-index: 5;
+  pointer-events: none;
+  animation: mail-mouth-retire 0.72s var(--ease-soft) both;
+}
+
+.mail-letter__mouth-flap {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #efd9b3, #ddbd8f);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transform-origin: 50% 0;
+  animation: mail-flap-open 0.28s ease-out both;
+}
+
+/* The mouth hinges open, then sinks away as the sheet stands up. */
+@keyframes mail-flap-open {
+  to {
+    transform: rotateX(-152deg);
+  }
+}
+@keyframes mail-mouth-retire {
+  0%,
+  52% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(24%) scaleX(0.96);
+  }
+}
+
+/* ---- the sheet being drawn out ---- */
+.mail-letter__sheet {
+  --paper-offset: 3.6rem;
+
+  position: relative;
+  z-index: 4;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-block-start: max(env(safe-area-inset-top), 0.75rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 5px 5px 0 0;
+  box-shadow:
+    inset 0 0 50px rgba(180, 150, 100, 0.16),
+    0 -6px 40px rgba(20, 12, 6, 0.28);
+  transform-origin: 50% 100%;
+  animation: mail-draw 0.62s var(--ease-pop) both;
+}
+
+@keyframes mail-draw {
+  0% {
+    opacity: 0;
+    transform: translateY(34%) scaleY(0.26) scaleX(0.88);
+  }
+  28% {
+    opacity: 1;
+  }
+  70% {
+    transform: translateY(-1.5%) scaleY(1.03) scaleX(1);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scaleY(1) scaleX(1);
+  }
+}
+
+/* ---- back out of the letter ---- */
+.mail-letter__back {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+  width: 100%;
+  padding: 0.7rem clamp(1rem, 4vw, 1.8rem);
+  font-family: var(--font-hand);
+  font-weight: 600;
+  font-size: clamp(1.05rem, 4.4vw, 1.25rem);
+  color: #c9772f;
+  text-align: left;
+  /* Opaque, with a dashed tear-off rule: the sheet scrolls under it, so a
+     fading edge just smears the ruled lines behind it. */
+  background: #fffdf5;
+  border-block-end: 1.5px dashed rgba(110, 150, 180, 0.45);
+}
+.mail-letter__back span {
+  font-size: 1.35em;
+  line-height: 0.7;
+}
+
+.mail-letter__content {
+  padding: 0.6rem clamp(1.2rem, 5vw, 2.4rem) clamp(2.5rem, 8vw, 4rem);
+  /* Clear of the red margin rule, which .paper-ruled draws at a fixed 38–40px. */
+  padding-inline-start: clamp(3.3rem, 9vw, 3.9rem);
+}
+
+.mail-letter__content > * {
+  animation: letter-line-fade 0.5s ease both;
+}
+
+/* ---- the letter itself ---- */
+.mail-letter__postmark {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: clamp(0.78rem, 3.2vw, 0.92rem);
+  letter-spacing: 0.14em;
+  color: var(--ink-soft, #6a5341);
+  opacity: 0.75;
+}
+
+.mail-letter__title {
+  font-family: var(--font-cute);
+  font-weight: 400;
+  font-size: clamp(1.7rem, 7.5vw, 2.4rem);
+  line-height: 1.15;
+  color: var(--ink, #3a2c22);
+  text-wrap: balance;
+  margin-block: 0.15rem 1rem;
+}
+
+.mail-letter__line {
+  font-family: var(--font-cute);
+  /* Matches Letter.css: Itim sets small, and Thai diacritics need the leading. */
+  font-size: clamp(1.15rem, 4.7vw, 1.45rem);
+  line-height: 1.75;
+  color: var(--ink, #3a2c22);
+  margin-block-end: 0.85rem;
+}
+.mail-letter__line strong {
+  font-weight: 400;
+  color: #b23a5b;
+}
+.mail-letter__line em {
+  font-style: normal;
+  font-family: var(--font-hand);
+  font-size: 1.12em;
+}
+
+/* ---- photos below the letter ---- */
+.mail-letter__photos {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: clamp(1rem, 4vw, 1.6rem);
+  margin-block-start: clamp(1.6rem, 6vw, 2.4rem);
+  /* A torn edge above the photos: the letter ends, the scrapbook begins. */
+  padding-block-start: clamp(1.2rem, 5vw, 1.8rem);
+  border-block-start: 1.5px dashed rgba(110, 150, 180, 0.4);
+}
+
+.mail-letter__photo {
+  flex: 0 1 min(100%, 15rem);
+  animation: rise-in 0.55s var(--ease-soft) both;
+}
+/* A single photo gets the full column; two or three share it. */
+.mail-letter__photos--1 .mail-letter__photo {
+  flex-basis: min(100%, 20rem);
+}
+
+@media (min-width: 640px) {
+  .mail-letter__photos--3 .mail-letter__photo,
+  .mail-letter__photos--2 .mail-letter__photo {
+    flex-basis: min(46%, 13rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Swap the animation rather than trusting the global duration kill, so the
+     sheet can't be left mid-draw. */
+  .mail-letter__sheet {
+    animation: fade-in 0.3s ease both;
+  }
+  .mail-letter__mouth {
+    display: none;
+  }
+}

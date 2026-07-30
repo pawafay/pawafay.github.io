@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { config } from '../../config'
+import { useDialogTrap } from '../../hooks/useDialogTrap'
 import './Letter.css'
 
 /** The opened birthday letter: a portal modal with focus trap + Esc to close. */
@@ -11,33 +12,7 @@ export function Letter({ onClose }: { onClose: () => void }) {
   const { greeting } = config
   const paragraphs = Array.isArray(greeting.body) ? greeting.body : [greeting.body]
 
-  useEffect(() => {
-    closeRef.current?.focus()
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault()
-        onClose()
-        return
-      }
-      if (e.key === 'Tab' && sheetRef.current) {
-        const f = sheetRef.current.querySelectorAll<HTMLElement>(
-          'button, a[href], [tabindex]:not([tabindex="-1"])',
-        )
-        if (f.length === 0) return
-        const first = f[0]
-        const last = f[f.length - 1]
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault()
-          last.focus()
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault()
-          first.focus()
-        }
-      }
-    }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [onClose])
+  useDialogTrap(sheetRef, onClose, closeRef)
 
   return createPortal(
     <div className="letter-overlay" onPointerDown={onClose}>
@@ -59,7 +34,7 @@ export function Letter({ onClose }: { onClose: () => void }) {
           ×
         </button>
 
-        <div className="letter__paper">
+        <div className="letter__paper paper-ruled">
           <div className="letter__content">
             <p className="letter__salutation" style={{ animationDelay: '0.1s' }}>
               {greeting.salutation}

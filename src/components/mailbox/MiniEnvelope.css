@@ -1,0 +1,185 @@
+/* One letter in the rack. Sized off its own inline size (container query units)
+   so a single block serves every breakpoint — the grid decides how wide a
+   column is, the envelope just fills it. */
+
+.mini-envelope {
+  container-type: inline-size;
+
+  position: relative;
+  display: block;
+  padding-block-end: 0.2rem;
+  text-decoration: none;
+  color: inherit;
+  rotate: var(--rot, 0deg);
+  animation: rise-in 0.6s var(--ease-soft) both;
+  animation-delay: calc(var(--i, 0) * 0.07s + 0.15s);
+  transition:
+    translate 0.24s var(--ease-pop),
+    rotate 0.24s var(--ease-pop),
+    scale 0.24s var(--ease-pop);
+}
+
+/* Pulling it out of the rack. Pointer devices only — a phone would fire this
+   on tap and leave the envelope stuck in its hover state. */
+@media (hover: hover) and (pointer: fine) {
+  .mini-envelope:hover {
+    translate: 0 -6px;
+    rotate: 0deg;
+    scale: 1.035;
+  }
+}
+.mini-envelope:active {
+  scale: 0.985;
+}
+
+/* ---- the paper ---- */
+.mini-envelope__paper {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 10;
+  background: linear-gradient(160deg, #e8cfa3 0%, #d9b486 60%, #c69b66 100%);
+  border-radius: 6px;
+  box-shadow:
+    inset 0 2px 3px rgba(255, 255, 255, 0.4),
+    0 6px 14px rgba(60, 35, 15, 0.3);
+}
+
+/* the V seam of the lower pocket */
+.mini-envelope__pocket {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  background:
+    linear-gradient(to bottom right, transparent 49.4%, rgba(120, 90, 55, 0.32) 50%) bottom left /
+      50% 100% no-repeat,
+    linear-gradient(to bottom left, transparent 49.4%, rgba(120, 90, 55, 0.32) 50%) bottom right /
+      50% 100% no-repeat;
+}
+
+.mini-envelope__flap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 58%;
+  background: linear-gradient(180deg, #efd9b3, #ddbd8f);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  border-radius: 6px 6px 0 0;
+  box-shadow: 0 2px 3px rgba(80, 55, 25, 0.22);
+  transform-origin: 50% 0;
+  transition: rotate 0.3s var(--ease-soft);
+  z-index: 2;
+}
+
+.mini-envelope__seal {
+  position: absolute;
+  top: 44%;
+  left: 50%;
+  width: 22cqi;
+  height: 22cqi;
+  translate: -50% -50%;
+  z-index: 3;
+}
+
+/* ---- airmail edge: only unread mail wears the stripes ---- */
+.mini-envelope.is-unread .mini-envelope__paper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  padding: 4cqi;
+  background: repeating-linear-gradient(
+    135deg,
+    var(--rose) 0 7px,
+    transparent 7px 14px,
+    var(--sky) 14px 21px,
+    transparent 21px 28px
+  );
+  /* Paint the border band only, leaving the middle of the envelope clean. */
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  opacity: 0.55;
+  z-index: 1;
+}
+
+/* ---- read state: flap tipped open, colour drained a touch ---- */
+.mini-envelope.is-read .mini-envelope__flap {
+  rotate: -13deg;
+}
+.mini-envelope.is-read .mini-envelope__paper {
+  filter: saturate(0.9) brightness(0.985);
+}
+
+/* ---- the postmark: the one machine-printed thing on a handwritten page ---- */
+.mini-envelope__postmark {
+  position: absolute;
+  top: -0.35rem;
+  right: -0.15rem;
+  z-index: 4;
+  padding: 0.18em 0.5em 0.22em;
+  border: 1.4px dashed color-mix(in oklab, var(--ink-soft, #6a5341), transparent 25%);
+  border-radius: 3px;
+  rotate: -7deg;
+  background: rgba(255, 250, 240, 0.42);
+  mix-blend-mode: multiply;
+}
+
+.mini-envelope__date {
+  display: block;
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: clamp(0.58rem, 8.5cqi, 0.86rem);
+  letter-spacing: 0.07em;
+  line-height: 1.1;
+  color: var(--ink-soft, #6a5341);
+  white-space: nowrap;
+}
+
+/* ---- title + unread dot ---- */
+.mini-envelope__title {
+  margin-block-start: 0.4rem;
+  font-family: var(--font-hand);
+  font-weight: 600;
+  font-size: clamp(0.95rem, 11cqi, 1.35rem);
+  line-height: 1.15;
+  text-align: center;
+  color: var(--text-main, #3a2c22);
+  text-wrap: balance;
+  /* Two lines then ellipsis, so one long title can't shove the grid around. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.mini-envelope__dot {
+  position: absolute;
+  top: -0.3rem;
+  left: -0.3rem;
+  z-index: 5;
+  width: 0.68rem;
+  height: 0.68rem;
+  border-radius: 50%;
+  background: var(--rose);
+  box-shadow:
+    0 0 0 2.5px var(--lit-cream, #f6ead2),
+    0 2px 6px rgba(180, 60, 90, 0.5);
+}
+
+@supports not (mask: linear-gradient(#000 0 0) content-box exclude) {
+  /* No mask support: fall back to a plain tinted rule around the edge. */
+  .mini-envelope.is-unread .mini-envelope__paper::before {
+    padding: 0;
+    background: none;
+    border: 3px solid var(--rose);
+    opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mini-envelope {
+    animation: fade-in 0.3s ease both;
+  }
+}
