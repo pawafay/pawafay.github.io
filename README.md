@@ -23,11 +23,23 @@ lined-paper letter.
 Open [`src/config.ts`](src/config.ts) and change:
 
 - `friendName`, `age`
+- `showIntro` — `false` skips the dark intro and opens on the lit party
 - `dialogue` — the two typed lines
 - `greeting` — the letter (salutation, body paragraphs, sign-off)
 - `stickers` — the scattered memory photos (captions, shapes, tape style)
 - `heroPhoto`, `stickers[].src`, `musicPath`, `sfx` — asset paths
 - `candleCount`, `confettiIntensity`, and optional `theme` overrides
+
+### Skipping the intro
+
+`showIntro: false` starts the story at the party instead of in the dark: no
+candle, no light switch, no typed lines. Useful once the surprise has been seen
+and the page is just the mailbox, and handy while working on the party itself.
+
+The switch is also what unlocks the music, so with the intro off the track waits
+for the first tap or key press anywhere on the page — a browser will not start
+audio before a gesture no matter how it is asked. Everything else (confetti,
+pop-up cascade, balloons) plays on load as usual.
 
 ### Adding real assets
 
