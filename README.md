@@ -75,6 +75,10 @@ Full format notes, both authoring paths, and the gotchas are in
 strips their EXIF, commits the folder and triggers a deploy. It only ever acts on
 issues that you both wrote and saved; anyone else's are closed untouched.
 
+The `surat` label is the published switch: take it off and the letter comes down,
+put it back and it returns unchanged. Note that coming off the site is not the
+same as being erased — the letter stays in git history, and this repo is public.
+
 **Write from the repo** — create the folder, commit, push. The folder name must
 start with `yyyy-mm-dd-`.
 

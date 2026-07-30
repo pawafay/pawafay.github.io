@@ -22,16 +22,15 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
-  readFileSync,
   readdirSync,
   renameSync,
   rmSync,
   writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { join } from 'node:path'
+import { LETTERS_DIR, findFolderForIssue } from './letter-folder.mjs'
 
-const LETTERS_DIR = resolve('src/letters')
 const MAX_PHOTOS = 3
 const MAX_BYTES = 25 * 1024 * 1024
 const TIMEZONE = 'Asia/Jakarta'
@@ -158,18 +157,6 @@ async function downloadPhoto(url, index, intoDir, bin) {
   rmSync(raw)
 }
 
-/** Any existing folder for this issue, found by the `issue:` key we write. */
-function existingFolderFor(issueNumber) {
-  if (!existsSync(LETTERS_DIR)) return null
-  for (const name of readdirSync(LETTERS_DIR)) {
-    const index = join(LETTERS_DIR, name, 'index.md')
-    if (!existsSync(index)) continue
-    const front = readFileSync(index, 'utf8').split(/\n---/, 1)[0]
-    if (new RegExp(`^issue:\\s*${issueNumber}\\s*$`, 'm').test(front)) return name
-  }
-  return null
-}
-
 function output(key, value) {
   const file = process.env.GITHUB_OUTPUT
   if (file) appendFileSync(file, `${key}=${value}\n`)
@@ -212,7 +199,7 @@ async function main() {
   // Replace rather than merge, so photos removed from the issue actually go away
   // instead of leaving a stale 3.jpg behind.
   mkdirSync(LETTERS_DIR, { recursive: true })
-  const previous = existingFolderFor(number)
+  const previous = findFolderForIssue(number)
   if (previous && previous !== folder) {
     rmSync(join(LETTERS_DIR, previous), { recursive: true, force: true })
     console.log(`sync-letter: renamed ${previous} -> ${folder}`)
