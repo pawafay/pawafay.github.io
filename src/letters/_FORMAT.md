@@ -77,6 +77,15 @@ no HTML. Anything else shows up as literal text.
 | `date`  | no       | Overrides the folder-name date. Must be `yyyy-mm-dd`.            |
 | `issue` | no       | Written by the workflow so edits find the right folder. Don't touch. |
 
+### The order they appear in
+
+Newest at the top of the rack. Letters sharing a date are ordered by issue
+number — GitHub only ever counts up, so that is the order you wrote them in.
+
+A letter committed by hand has no issue number and so nothing to compare with;
+it sits after the issue-written letters of the same day. If that matters, give
+it a `date` a day later, or write it as an issue instead.
+
 ### Photos
 
 Drop image files straight into the letter's folder — no need to mention them
