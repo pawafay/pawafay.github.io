@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { useHashRoute } from '../../hooks/useHashRoute'
 import { useLocalStorage } from '../../hooks/useLocalStorage'
-import { findLetter, letterProblems, letters } from '../../lib/letters'
+import { findLetter, hasMail, letterProblems, letters } from '../../lib/letters'
 import { clearHashRoute, parseMailSlug } from '../../lib/routes'
 import { MiniEnvelope } from './MiniEnvelope'
 import { MailLetter } from './MailLetter'
@@ -69,9 +69,9 @@ export function Mailbox() {
     rackRef.current?.querySelector<HTMLElement>(`[data-slug="${CSS.escape(slug)}"]`)?.focus()
   }, [activeSlug])
 
-  const problems = import.meta.env.DEV ? letterProblems : []
-  if (letters.length === 0 && problems.length === 0) return null
+  if (!hasMail) return null
 
+  const problems = import.meta.env.DEV ? letterProblems : []
   const unread = letters.reduce((n, letter) => (read[letter.slug] ? n : n + 1), 0)
 
   return (
