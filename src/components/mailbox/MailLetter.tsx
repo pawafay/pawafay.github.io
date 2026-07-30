@@ -35,65 +35,71 @@ export function MailLetter({ letter, onClose }: MailLetterProps) {
 
   return createPortal(
     <div className="mail-letter-overlay">
-      <div
-        className="mail-letter"
-        role="dialog"
-        aria-modal="true"
-        aria-label={title ? `${title}, letter from ${date}` : `Letter from ${date}`}
-        ref={sheetRef}
-      >
-        {/* The envelope mouth the paper is drawn out of. Purely scenery. */}
-        <span className="mail-letter__mouth" aria-hidden="true">
-          <span className="mail-letter__mouth-flap" />
-        </span>
+      {/* The envelope mouth the paper is drawn out of. Purely scenery — and a
+          sibling of the scroller rather than of the sheet, so it stays at the
+          bottom of the screen instead of riding down with a long letter. */}
+      <span className="mail-letter__mouth" aria-hidden="true">
+        <span className="mail-letter__mouth-flap" />
+      </span>
 
-        <div className="mail-letter__sheet paper-ruled">
-          <button type="button" ref={backRef} className="mail-letter__back" onClick={onClose}>
-            <span aria-hidden="true">‹</span> back to the mailbox
-          </button>
+      <div className="mail-letter-overlay__scroll">
+        <div
+          className="mail-letter"
+          role="dialog"
+          aria-modal="true"
+          aria-label={title ? `${title}, letter from ${date}` : `Letter from ${date}`}
+          ref={sheetRef}
+        >
+          <div className="mail-letter__sheet">
+            <button type="button" ref={backRef} className="mail-letter__back" onClick={onClose}>
+              <span aria-hidden="true">‹</span> back to the mailbox
+            </button>
 
-          <div className="mail-letter__content">
-            <p className="mail-letter__postmark" style={{ animationDelay: '0.44s' }}>
-              <time dateTime={date}>{date}</time>
-            </p>
-
-            {title && (
-              <h3 className="mail-letter__title" style={{ animationDelay: '0.5s' }}>
-                {title}
-              </h3>
-            )}
-
-            {paragraphs.map((paragraph, i) => (
-              <p
-                key={i}
-                className="mail-letter__line"
-                style={{ animationDelay: `${0.56 + i * 0.14}s` }}
-              >
-                <InlineText text={paragraph} />
+            {/* The ruled surface, and where the writing starts: the ruling is
+                aligned to this box, so the header above it can be any height. */}
+            <div className="mail-letter__content paper-ruled">
+              <p className="mail-letter__postmark" style={{ animationDelay: '0.44s' }}>
+                <time dateTime={date}>{date}</time>
               </p>
-            ))}
 
-            {photos.length > 0 && (
-              <div className={`mail-letter__photos mail-letter__photos--${photos.length}`}>
-                {photos.map((photo, i) => (
-                  <div
-                    key={photo.name}
-                    className="mail-letter__photo"
-                    style={
-                      { animationDelay: `${photosDelay + i * 0.12}s`, '--i': i } as CSSProperties
-                    }
-                  >
-                    <TapedPhoto
-                      resolvedSrc={photo.url}
-                      shape="polaroid"
-                      tapeStyle={TAPES[i % TAPES.length]}
-                      seed={`${letter.slug}-${photo.name}`}
-                      alt={title ? `${title} — photo ${i + 1}` : `Photo ${i + 1} from ${date}`}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
+              {title && (
+                <h3 className="mail-letter__title" style={{ animationDelay: '0.5s' }}>
+                  {title}
+                </h3>
+              )}
+
+              {paragraphs.map((paragraph, i) => (
+                <p
+                  key={i}
+                  className="mail-letter__line"
+                  style={{ animationDelay: `${0.56 + i * 0.14}s` }}
+                >
+                  <InlineText text={paragraph} />
+                </p>
+              ))}
+
+              {photos.length > 0 && (
+                <div className={`mail-letter__photos mail-letter__photos--${photos.length}`}>
+                  {photos.map((photo, i) => (
+                    <div
+                      key={photo.name}
+                      className="mail-letter__photo"
+                      style={
+                        { animationDelay: `${photosDelay + i * 0.12}s`, '--i': i } as CSSProperties
+                      }
+                    >
+                      <TapedPhoto
+                        resolvedSrc={photo.url}
+                        shape="polaroid"
+                        tapeStyle={TAPES[i % TAPES.length]}
+                        seed={`${letter.slug}-${photo.name}`}
+                        alt={title ? `${title} — photo ${i + 1}` : `Photo ${i + 1} from ${date}`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

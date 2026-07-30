@@ -7,16 +7,13 @@
    is pinned to its lit values. */
 
 .mail-letter-overlay {
+  /* Shared with the envelope mouth, which lives outside the scroller and so can
+     no longer take its width from the sheet. */
+  --sheet-w: min(96vw, 620px);
+
   position: fixed;
   inset: 0;
   z-index: 110;
-  /* Flex, not grid: an auto-sized grid row grows to the sheet's content height,
-     so `height: 100%` on the sheet's parent resolves against the *content* and
-     the sheet never becomes scrollable. A column flex container has a definite
-     height here (inset: 0), so percentages resolve against the viewport. */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   overflow: hidden;
   perspective: 900px;
   perspective-origin: 50% 100%;
@@ -28,22 +25,44 @@
   animation: fade-in 0.26s ease both;
 }
 
+/* The screen scrolls, not the paper.
+   A letter is taller than a phone more often than not, and a scrollbar inside
+   the sheet turns it into a box on a webpage — you end up dragging a panel
+   instead of the screen you are reading. Same shape as .party-scene__scroll: a
+   full-bleed scroller, with the sheet pushed to the bottom by auto margin when
+   the letter is short and left free to run past the screen when it isn't. */
+.mail-letter-overlay__scroll {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-y: auto;
+  overflow-x: clip;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
 .mail-letter {
   position: relative;
   flex: 0 0 auto;
-  width: min(96vw, 620px);
-  height: 100%;
+  width: var(--sheet-w);
+  /* min-height, not height: growing past the screen is exactly what the scroller
+     above is there to scroll. */
+  min-height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
 }
 
 /* ---- the envelope mouth the paper is pulled out of ---- */
+/* Pinned to the bottom of the screen rather than to the sheet: the sheet is now
+   as tall as the letter, so anchoring to it would park the envelope a screen or
+   three below the opening it is meant to be part of. */
 .mail-letter__mouth {
   position: absolute;
   bottom: 0;
   left: 50%;
-  width: 104%;
+  width: calc(var(--sheet-w) * 1.04);
   height: 4.5rem;
   translate: -50% 0;
   transform-style: preserve-3d;
@@ -87,16 +106,27 @@
 
 /* ---- the sheet being drawn out ---- */
 .mail-letter__sheet {
-  --paper-offset: 3.6rem;
+  /* One ruled line = one line of writing.
+     The pitch is derived from the body text's own size instead of guessed, which
+     is the whole fix: the ruling used to repeat every 34px under lines ~40px
+     tall, so by the fourth line the writing had slid off it. Every vertical
+     measure below is a whole number of these, and that is what keeps each line
+     centred in its band however long the letter runs. */
+  --letter-size: clamp(1.15rem, 4.7vw, 1.45rem);
+  --rule: calc(var(--letter-size) * 1.75);
 
   position: relative;
   z-index: 4;
-  flex: 1 1 auto;
-  min-height: 0;
+  /* Grows to fill a short letter's screen, and past it for a long one. */
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
   margin-block-start: max(env(safe-area-inset-top), 0.75rem);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
+  /* Not a scroll container any more, so the sticky header would otherwise spill
+     out of the rounded corners. clip crops it without making one — which is what
+     lets the header keep sticking to the *screen* as it scrolls. */
+  overflow: clip;
+  background-color: #fffdf5;
   border-radius: 5px 5px 0 0;
   box-shadow:
     inset 0 0 50px rgba(180, 150, 100, 0.16),
@@ -147,8 +177,15 @@
   line-height: 0.7;
 }
 
+/* The ruling is drawn here rather than on the sheet, so it starts where the
+   writing starts and the sticky header's height stops being part of the sum. A
+   top padding of exactly one rule leaves one empty line under the tear-off, and
+   puts the first line of writing in the band below it — hence no --paper-offset
+   nudge, unlike the closing letter. */
 .mail-letter__content {
-  padding: 0.6rem clamp(1.2rem, 5vw, 2.4rem) clamp(2.5rem, 8vw, 4rem);
+  flex: 1 0 auto; /* ruled paper carries on to the bottom of the sheet */
+  padding-block: var(--rule) clamp(2.5rem, 8vw, 4rem);
+  padding-inline: clamp(1.2rem, 5vw, 2.4rem);
   /* Clear of the red margin rule, which .paper-ruled draws at a fixed 38–40px. */
   padding-inline-start: clamp(3.3rem, 9vw, 3.9rem);
 }
@@ -163,6 +200,7 @@
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   font-size: clamp(0.78rem, 3.2vw, 0.92rem);
+  line-height: var(--rule);
   letter-spacing: 0.14em;
   color: var(--ink-soft, #6a5341);
   opacity: 0.75;
@@ -171,20 +209,25 @@
 .mail-letter__title {
   font-family: var(--font-cute);
   font-weight: 400;
-  font-size: clamp(1.7rem, 7.5vw, 2.4rem);
-  line-height: 1.15;
+  /* Sized to sit within one ruled line — a title written on the pad rather than
+     over it. Keeping it to a whole rule is also what lets a title wrap to two
+     lines without knocking the writing below it off the ruling. */
+  font-size: clamp(1.5rem, 6.3vw, 2.05rem);
+  line-height: var(--rule);
   color: var(--ink, #3a2c22);
   text-wrap: balance;
-  margin-block: 0.15rem 1rem;
+  margin-block: 0 var(--rule);
 }
 
 .mail-letter__line {
   font-family: var(--font-cute);
   /* Matches Letter.css: Itim sets small, and Thai diacritics need the leading. */
-  font-size: clamp(1.15rem, 4.7vw, 1.45rem);
-  line-height: 1.75;
+  font-size: var(--letter-size);
+  line-height: var(--rule);
   color: var(--ink, #3a2c22);
-  margin-block-end: 0.85rem;
+  /* One blank ruled line between paragraphs. Any other gap and everything below
+     it lands between the rules instead of on them. */
+  margin-block-end: var(--rule);
 }
 .mail-letter__line strong {
   font-weight: 400;
