@@ -14,6 +14,7 @@ import { Cake } from '../components/cake/Cake'
 import { Envelope } from '../components/letter/Envelope'
 import { Letter } from '../components/letter/Letter'
 import { Mailbox } from '../components/mailbox/Mailbox'
+import { hasMail } from '../lib/letters'
 import './PartyScene.css'
 
 interface PartySceneProps {
@@ -88,9 +89,11 @@ export function PartyScene({ phase, reduced, openLetter, closeLetter }: PartySce
             <Envelope ref={envelopeRef} onOpen={openLetter} />
           </div>
 
-          <div className="party-scene__mailbox pop-layer" style={{ '--i': 4 } as CSSProperties}>
-            <Mailbox />
-          </div>
+          {hasMail && (
+            <div className="party-scene__mailbox pop-layer" style={{ '--i': 4 } as CSSProperties}>
+              <Mailbox />
+            </div>
+          )}
         </div>
       </div>
 

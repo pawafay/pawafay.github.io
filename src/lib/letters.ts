@@ -174,6 +174,14 @@ function build(): LetterEntry[] {
 
 export const letters: LetterEntry[] = build()
 
+/**
+ * Whether there is a mailbox to show at all. Single source of truth, because
+ * PartyScene has to decide whether to render the wrapper too — otherwise an
+ * empty mailbox leaves a stray pop-layer div and its margin in the party.
+ */
+export const hasMail: boolean =
+  letters.length > 0 || (import.meta.env.DEV && letterProblems.length > 0)
+
 /** The letter a hash route points at, or undefined when the slug is stale/unknown. */
 export function findLetter(slug: string | null | undefined): LetterEntry | undefined {
   if (!slug) return undefined
