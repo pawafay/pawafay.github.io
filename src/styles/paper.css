@@ -6,6 +6,11 @@
    Set --paper-offset to the sheet's own top padding so the first ruled line
    lands under the first line of text instead of through it.
 
+   Set --rule to the height of one line of writing — i.e. the text's computed
+   line-height — and the ruling repeats in step with the text instead of drifting
+   away from it down the page. Leave it alone and the rules keep the 34px pitch
+   the closing letter was drawn with.
+
    Colours are literal on purpose. Letters render inside a portal, outside
    .story-stage, where the lighting-aware surface and text tokens do not resolve
    (they are declared on .story-stage, not :root).
@@ -24,7 +29,11 @@
       rgba(214, 112, 120, 0.4) 40px,
       transparent 40px
     ),
-    repeating-linear-gradient(180deg, transparent 0 33px, rgba(110, 150, 180, 0.28) 33px 34px);
+    repeating-linear-gradient(
+      180deg,
+      transparent 0 calc(var(--rule, 34px) - 1px),
+      rgba(110, 150, 180, 0.28) calc(var(--rule, 34px) - 1px) var(--rule, 34px)
+    );
   background-position:
     0 0,
     0 var(--paper-offset, 0px);

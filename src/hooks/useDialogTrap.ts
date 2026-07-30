@@ -15,7 +15,10 @@ export function useDialogTrap(
   initialFocusRef?: RefObject<HTMLElement | null>,
 ): void {
   useEffect(() => {
-    initialFocusRef?.current?.focus()
+    // preventScroll, because the letter is opening: the sheet is mid-animation
+    // and still translated down the screen, so letting focus scroll its button
+    // into view lands the reader a paragraph into a letter they haven't started.
+    initialFocusRef?.current?.focus({ preventScroll: true })
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
