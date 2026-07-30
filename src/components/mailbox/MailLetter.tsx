@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 import type { LetterEntry } from '../../letters.types'
 import type { TapeStyle } from '../../config.types'
 import { useDialogTrap } from '../../hooks/useDialogTrap'
+import { useReadingTracker } from '../../hooks/useReadingTracker'
 import { TapedPhoto } from '../photo/TapedPhoto'
 import { InlineText } from './InlineText'
 import './MailLetter.css'
@@ -27,10 +28,20 @@ interface MailLetterProps {
 export function MailLetter({ letter, onClose }: MailLetterProps) {
   const sheetRef = useRef<HTMLDivElement>(null)
   const backRef = useRef<HTMLButtonElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   useDialogTrap(sheetRef, onClose, backRef)
 
   const { date, title, paragraphs, photos } = letter
+
+  useReadingTracker(scrollRef, {
+    kind: 'mail',
+    slug: letter.slug,
+    title,
+    paragraphCount: paragraphs.length,
+    photoCount: photos.length,
+  })
+
   const photosDelay = 0.52 + paragraphs.length * 0.14
 
   return createPortal(
@@ -42,7 +53,7 @@ export function MailLetter({ letter, onClose }: MailLetterProps) {
         <span className="mail-letter__mouth-flap" />
       </span>
 
-      <div className="mail-letter-overlay__scroll">
+      <div className="mail-letter-overlay__scroll" ref={scrollRef}>
         <div
           className="mail-letter"
           role="dialog"

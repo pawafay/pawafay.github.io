@@ -52,6 +52,12 @@ export interface StoryConfig {
   friendName: string
   age?: number
   /**
+   * Google Analytics 4 measurement ID, e.g. 'G-XXXXXXXXXX'. Omit or leave empty
+   * and no analytics script loads at all. Not a secret — a measurement ID is
+   * visible in the page source of every site that uses one.
+   */
+  analyticsId?: string
+  /**
    * The dark intro — candle, light switch, the two typed lines.
    * `false` opens straight into the lit party. Defaults to `true`.
    *

@@ -2,17 +2,28 @@ import { useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { config } from '../../config'
 import { useDialogTrap } from '../../hooks/useDialogTrap'
+import { useReadingTracker } from '../../hooks/useReadingTracker'
 import './Letter.css'
 
 /** The opened birthday letter: a portal modal with focus trap + Esc to close. */
 export function Letter({ onClose }: { onClose: () => void }) {
   const sheetRef = useRef<HTMLDivElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
+  const paperRef = useRef<HTMLDivElement>(null)
 
   const { greeting } = config
   const paragraphs = Array.isArray(greeting.body) ? greeting.body : [greeting.body]
 
   useDialogTrap(sheetRef, onClose, closeRef)
+
+  // There is only ever one of these, so a fixed slug rather than a real one.
+  useReadingTracker(paperRef, {
+    kind: 'greeting',
+    slug: '(greeting)',
+    title: greeting.salutation,
+    paragraphCount: paragraphs.length,
+    photoCount: 0,
+  })
 
   return createPortal(
     <div className="letter-overlay" onPointerDown={onClose}>
@@ -34,7 +45,7 @@ export function Letter({ onClose }: { onClose: () => void }) {
           ×
         </button>
 
-        <div className="letter__paper paper-ruled">
+        <div className="letter__paper paper-ruled" ref={paperRef}>
           <div className="letter__content">
             <p className="letter__salutation" style={{ animationDelay: '0.1s' }}>
               {greeting.salutation}

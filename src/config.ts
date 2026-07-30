@@ -14,6 +14,11 @@ export const config: StoryConfig = {
   friendName: 'Pawa 🌻',
   age: 20,
 
+  // — Google Analytics 4 measurement ID. Paste the 'G-…' from your GA4 web data
+  //   stream to switch tracking on; leave it empty and nothing is loaded or sent.
+  //   In `bun run dev` events only print to the console, never to Google. —
+  analyticsId: 'G-M488QQ3VP4',
+
   // — The dark intro (candle → light switch → the two typed lines).
   //   false → the page opens straight into the lit party. Note that the switch
   //   is what unlocks the music, so with the intro off it starts on the first
