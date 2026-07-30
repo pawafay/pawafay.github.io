@@ -147,7 +147,12 @@ function build(): LetterEntry[] {
       continue
     }
 
+    // Trailing spaces ride along for free from an editor or a phone keyboard,
+    // and they matter now that a newline inside a paragraph is a real break (see
+    // InlineText): a line holding nothing but spaces isn't blank, so it would
+    // quietly stop a paragraph break from being one. Flatten them first.
     const paragraphs = strip(body)
+      .replace(/[ \t]+$/gm, '')
       .split(/\n{2,}/)
       .map((p) => p.trim())
       .filter(Boolean)
