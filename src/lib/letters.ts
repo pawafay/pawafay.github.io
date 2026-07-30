@@ -167,8 +167,25 @@ function build(): LetterEntry[] {
     })
   }
 
-  // Newest first. Slug breaks ties so the order never depends on glob order.
-  entries.sort((a, b) => b.date.localeCompare(a.date) || a.slug.localeCompare(b.slug))
+  // Newest first — and "newest" has to survive several letters sharing a day,
+  // which is the normal case, not the edge one.
+  //
+  // The date is only a day, so same-day letters used to fall through to the slug
+  // and come out in alphabetical order. That reads as random, and when the titles
+  // happen to run in the order they were written it reads as *backwards*. The
+  // issue number is the write-order signal we already have — GitHub only ever
+  // counts up, and the sync workflow records it in the frontmatter — so it
+  // settles the tie properly.
+  //
+  // A hand-written letter carries no issue number and so no time to compare
+  // against; it sorts after the issue-written ones of its own day. The slug is
+  // last purely so the order can never depend on the glob's.
+  entries.sort(
+    (a, b) =>
+      b.date.localeCompare(a.date) ||
+      (b.issue ?? -1) - (a.issue ?? -1) ||
+      b.slug.localeCompare(a.slug),
+  )
   return entries
 }
 
