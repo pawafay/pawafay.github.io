@@ -11,7 +11,7 @@ import type { StoryConfig } from './config.types'
 
 export const config: StoryConfig = {
   // — Who this is for —
-  friendName: 'Pawa Babi 🐖🐷',
+  friendName: 'Pawa 🌻',
   age: 20,
 
   // — The dark intro (candle → light switch → the two typed lines).
