@@ -1,0 +1,142 @@
+.taped-photo {
+  --rot: 0deg;
+  container-type: inline-size;
+  position: relative;
+  rotate: var(--rot);
+  margin: 0;
+  filter: drop-shadow(0 10px 18px rgba(40, 25, 12, 0.32));
+  transition:
+    transform 0.3s var(--ease-pop),
+    rotate 0.3s var(--ease-pop);
+}
+
+.taped-photo__frame {
+  position: relative;
+  background: var(--lit-white, #fffaf0);
+  padding: 5cqi 5cqi 5cqi;
+  border-radius: 3px;
+}
+
+.taped-photo__window {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  background: #e7d3ad;
+  border-radius: 2px;
+}
+.taped-photo__window img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---- Polaroid ---- */
+.taped-photo--polaroid .taped-photo__frame {
+  padding-bottom: 16cqi;
+}
+.taped-photo__strip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 3cqi;
+  padding: 0 6%;
+  text-align: center;
+  font-family: var(--font-hand);
+  font-weight: 600;
+  font-size: clamp(0.85rem, 7cqi, 1.6rem);
+  color: #5b4630;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---- Torn ---- */
+.taped-photo--torn .taped-photo__frame {
+  padding: 4cqi;
+  background: #fdf6e6;
+  clip-path: polygon(
+    1% 4%,
+    22% 1%,
+    46% 5%,
+    70% 1%,
+    99% 3%,
+    97% 70%,
+    99% 96%,
+    74% 99%,
+    48% 95%,
+    26% 99%,
+    4% 96%,
+    2% 60%
+  );
+}
+.taped-photo--torn .taped-photo__window {
+  aspect-ratio: 4 / 5;
+}
+
+/* ---- Circle ---- */
+.taped-photo--circle .taped-photo__frame {
+  padding: 4cqi;
+  border-radius: 50%;
+}
+.taped-photo--circle .taped-photo__window {
+  border-radius: 50%;
+}
+
+/* caption tag for non-polaroid shapes */
+.taped-photo__tag {
+  position: absolute;
+  left: 50%;
+  bottom: -8cqi;
+  translate: -50% 0;
+  rotate: -4deg;
+  white-space: nowrap;
+  z-index: 3;
+}
+
+/* ============ Tape ============ */
+.tape {
+  position: absolute;
+  z-index: 4;
+  pointer-events: none;
+}
+.tape--strip {
+  width: 34cqi;
+  height: 9cqi;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0)),
+    var(--tape, rgba(247, 236, 205, 0.55));
+  border-left: 1px solid var(--tape-edge, rgba(120, 96, 60, 0.25));
+  border-right: 1px solid var(--tape-edge, rgba(120, 96, 60, 0.25));
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(0.5px);
+}
+.tape--single {
+  top: -4cqi;
+  left: 50%;
+  translate: -50% 0;
+  rotate: -3deg;
+}
+.tape--left {
+  top: -3cqi;
+  left: -4cqi;
+  rotate: -42deg;
+}
+.tape--right {
+  top: -3cqi;
+  right: -4cqi;
+  rotate: 42deg;
+}
+.tape--tack {
+  top: -3cqi;
+  left: 50%;
+  width: 9cqi;
+  height: 9cqi;
+  translate: -50% 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ff8fa6, #d6406a 70%, #a72b50);
+  box-shadow:
+    0 3px 5px rgba(0, 0, 0, 0.35),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.3),
+    inset 0 2px 2px rgba(255, 255, 255, 0.5);
+}

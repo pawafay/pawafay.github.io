@@ -1,0 +1,98 @@
+.party-scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  animation: fade-in 0.8s ease both;
+}
+
+.party-scene__scroll {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: clip;
+  -webkit-overflow-scrolling: touch;
+  padding: max(env(safe-area-inset-top), 3vh) 1rem max(env(safe-area-inset-bottom), 3vh);
+}
+
+/* margin:auto centres when short, but stays fully scrollable when tall */
+.party-scene__content {
+  margin: auto;
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(1.25rem, 4vh, 2.5rem);
+  perspective: 1300px;
+  perspective-origin: 50% 80%;
+}
+
+/* ---- headline ---- */
+.party-scene__head {
+  position: relative;
+  text-align: center;
+}
+.party-scene__eyebrow {
+  font-family: var(--font-hand);
+  font-weight: 700;
+  font-size: clamp(1.2rem, 5vw, 1.8rem);
+  letter-spacing: 0.12em;
+  color: #c9772f;
+  text-transform: lowercase;
+}
+.party-scene__title {
+  font-family: var(--font-cute);
+  font-weight: 400;
+  font-optical-sizing: auto;
+  font-size: clamp(2.6rem, 12vw, 5rem);
+  line-height: 1.05;
+  color: var(--ink, #3a2c22);
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.party-scene__age {
+  position: absolute;
+  top: -0.6em;
+  right: -0.2em;
+  display: grid;
+  place-items: center;
+  width: clamp(2.2rem, 9vw, 3rem);
+  height: clamp(2.2rem, 9vw, 3rem);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.1rem, 4.5vw, 1.5rem);
+  color: #fffaf0;
+  background: var(--rose);
+  border-radius: 50%;
+  rotate: 8deg;
+  box-shadow: 0 6px 14px rgba(180, 60, 90, 0.4);
+}
+
+/* ---- hero photo ---- */
+.party-scene__hero {
+  width: min(72vw, 320px);
+}
+
+/* ---- pop-up cascade ---- */
+.pop-layer {
+  transform-origin: 50% 100%;
+  animation: popup-hinge 0.95s var(--ease-pop) both;
+  animation-delay: calc(var(--i, 0) * 0.16s + 0.1s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .party-scene,
+  .pop-layer {
+    animation: fade-in 0.4s ease both;
+  }
+}
+
+/* tighten gaps on very short viewports */
+@media (max-height: 620px) {
+  .party-scene__content {
+    gap: clamp(0.75rem, 2.5vh, 1.5rem);
+  }
+}

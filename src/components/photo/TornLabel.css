@@ -1,0 +1,26 @@
+.torn-label {
+  display: inline-block;
+  padding: 0.1em 0.6em 0.18em;
+  font-family: var(--font-hand);
+  font-weight: 600;
+  font-size: clamp(0.78rem, 5.5cqi, 1.3rem);
+  color: #5b4630;
+  line-height: 1.1;
+  background: linear-gradient(180deg, #fdf6e6, #f0e2c4);
+  box-shadow: 0 2px 5px rgba(60, 40, 20, 0.25);
+  /* slightly torn paper strip */
+  clip-path: polygon(
+    2% 12%,
+    18% 4%,
+    40% 10%,
+    62% 2%,
+    84% 9%,
+    98% 4%,
+    97% 88%,
+    80% 96%,
+    58% 90%,
+    34% 97%,
+    14% 91%,
+    3% 96%
+  );
+}

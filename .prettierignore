@@ -1,0 +1,14 @@
+# Build output
+dist
+build
+
+# Dependencies
+node_modules
+
+# Generated / lockfiles
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Static assets
+public

@@ -1,0 +1,28 @@
+.sticker-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.sticker-layer__item {
+  position: absolute;
+  pointer-events: auto;
+  animation: scrap-settle 0.9s var(--ease-soft) both;
+  transition:
+    transform 0.3s var(--ease-pop),
+    z-index 0s;
+}
+
+/* lift a sticker on hover/focus for a peelable feel */
+.sticker-layer__item:hover,
+.sticker-layer__item:focus-within {
+  transform: scale(1.06) translateY(-4px);
+  z-index: 9;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sticker-layer__item {
+    animation: fade-in 0.4s ease both;
+  }
+}

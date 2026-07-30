@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#14110f"/>
+  <!-- flame -->
+  <path d="M32 8c0 0-6 7-6 12a6 6 0 0 0 12 0c0-5-6-12-6-12Z" fill="#ff9d4d"/>
+  <ellipse cx="32" cy="19" rx="2.4" ry="4" fill="#fffef5"/>
+  <!-- candle -->
+  <rect x="30" y="26" width="4" height="9" fill="#f6ead2"/>
+  <!-- cake top tier -->
+  <rect x="20" y="35" width="24" height="9" rx="3" fill="#fff3df"/>
+  <!-- cake bottom tier -->
+  <rect x="14" y="43" width="36" height="12" rx="4" fill="#f3dcb8"/>
+  <!-- sprinkles -->
+  <circle cx="22" cy="48" r="1.6" fill="#e8728c"/>
+  <circle cx="30" cy="50" r="1.6" fill="#6db5c9"/>
+  <circle cx="38" cy="47" r="1.6" fill="#7faa78"/>
+  <circle cx="44" cy="50" r="1.6" fill="#c9a24b"/>
+  <!-- plate -->
+  <rect x="11" y="54" width="42" height="4" rx="2" fill="#cbb088"/>
+</svg>

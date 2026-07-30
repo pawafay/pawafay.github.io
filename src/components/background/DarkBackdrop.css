@@ -1,0 +1,50 @@
+.dark-backdrop {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 90% at 50% 42%, #241c15 0%, #16120e 55%, #0d0a08 100%);
+  overflow: hidden;
+}
+
+/* faint film grain for atmosphere */
+.dark-backdrop__grain {
+  position: absolute;
+  inset: -50%;
+  opacity: 0.05;
+  background-image: radial-gradient(rgba(255, 220, 160, 0.7) 0.5px, transparent 0.5px);
+  background-size: 4px 4px;
+  pointer-events: none;
+}
+
+.dark-backdrop__glow {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  width: 60vmax;
+  height: 60vmax;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 184, 102, 0.42) 0%,
+    rgba(255, 150, 70, 0.16) 32%,
+    transparent 64%
+  );
+  opacity: 0;
+  scale: 0.35;
+  transition:
+    opacity 1s ease,
+    scale 1.4s var(--ease-soft);
+  pointer-events: none;
+}
+
+.dark-backdrop.is-glowing .dark-backdrop__glow {
+  opacity: 1;
+  scale: 1;
+  animation: glow-pulse 3.5s ease-in-out infinite 1.4s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dark-backdrop.is-glowing .dark-backdrop__glow {
+    animation: none;
+  }
+}

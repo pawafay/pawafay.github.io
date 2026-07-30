@@ -1,0 +1,53 @@
+.flame {
+  position: relative;
+  display: inline-block;
+  transform-origin: 50% 100%;
+}
+
+.flame__body {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 100%;
+  animation: flame-flicker 220ms ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 6px rgba(255, 157, 77, 0.8));
+}
+
+.flame__glow {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  width: 420%;
+  height: 420%;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 196, 110, 0.55) 0%,
+    rgba(255, 157, 77, 0.25) 35%,
+    transparent 70%
+  );
+  animation: glow-pulse 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.flame--out .flame__smoke {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 3px;
+  height: 60%;
+  translate: -50% 0;
+  background: linear-gradient(to top, rgba(180, 180, 180, 0.5), transparent);
+  border-radius: 50%;
+  transform-origin: 50% 100%;
+  animation: wick-smoke 1.1s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flame__body {
+    animation: none;
+  }
+  .flame__glow {
+    animation: none;
+  }
+}

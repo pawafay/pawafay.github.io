@@ -1,0 +1,65 @@
+/* ============================================================================
+   THEME — palette, type scale, and the master --lit lighting variable.
+   "Pop-Up Petang": a paper diorama that boots in candlelit dark, then floods
+   with warm gold when the switch is flipped. One registered custom property
+   (--lit, 0→1) drives the entire dark→lit colour transition via color-mix.
+   ============================================================================ */
+
+/* Registered so it can be animated/transitioned (plain custom props can't be). */
+@property --lit {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+:root {
+  /* ---- Type families (loaded via @fontsource in main.tsx) ---- */
+  --font-display: 'Fraunces Variable', 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-serif: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --font-hand: 'Caveat', 'Segoe Script', 'Bradley Hand', cursive;
+  /* Round, cute handwriting with full Thai + Latin coverage. */
+  --font-cute: 'Itim', 'Caveat', 'Segoe UI', cursive;
+
+  /* ---- Dark surfaces (candlelit room) ---- */
+  --dark-0: #14110f; /* deepest backdrop */
+  --dark-1: #1f1a16;
+  --dark-2: #2b2018;
+  --dark-3: #3a2c22; /* lifted paper edge in the dark */
+
+  /* ---- Lit surfaces (party flood) ---- */
+  --lit-cream: #f6ead2;
+  --lit-cream-2: #efe0c2;
+  --lit-kraft: #d9b486;
+  --lit-gold: #c9a24b;
+  --lit-white: #fffaf0;
+
+  /* ---- Ink + warm light ---- */
+  --ink: #3a2c22; /* body text — never pure black */
+  --ink-soft: #6a5341;
+  --ember: #ff9d4d; /* flame / glow */
+  --wax: #ffd27a; /* candle wax highlight */
+
+  /* ---- Accents (paper confetti, balloons, tape) ---- */
+  --rose: #e8728c;
+  --sage: #7faa78;
+  --sky: #6db5c9;
+  --gold: #c9a24b;
+  --grape: #9b7ad1;
+
+  /* NOTE: the lighting-aware derived tokens (--pct, --surface-*, --text-*)
+     are declared on .story-stage (StoryStage.css), NOT here, so that var(--lit)
+     resolves against the stage's live --lit rather than root's frozen 0. */
+
+  /* ---- Glow (driven by the candle in the dark) ---- */
+  --glow-radius: 30vmax;
+  --glow-opacity: 0.5;
+
+  /* ---- Motion + layout knobs ---- */
+  --ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1); /* gentle overshoot */
+  --ease-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --tape: rgba(247, 236, 205, 0.55); /* translucent washi tape */
+  --tape-edge: rgba(120, 96, 60, 0.25);
+  --shadow-paper: 0 1px 1px rgba(0, 0, 0, 0.18), 0 8px 22px rgba(20, 12, 6, 0.28);
+
+  color-scheme: dark;
+}

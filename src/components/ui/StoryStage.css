@@ -1,0 +1,38 @@
+.story-stage {
+  --lit: 0;
+
+  /* Lighting-aware tokens MUST live here so var(--lit) resolves against this
+     element's animated --lit (not :root's frozen initial value). As --lit
+     transitions 0→1, every dependent color-mix below is re-substituted each
+     frame, flooding the whole tree from candlelit dark to warm cream. */
+  --pct: calc(var(--lit) * 100%);
+  --surface-page: color-mix(in oklab, var(--dark-0), var(--lit-cream) var(--pct));
+  --surface-card: color-mix(in oklab, var(--dark-2), var(--lit-white) var(--pct));
+  --surface-kraft: color-mix(in oklab, var(--dark-3), var(--lit-kraft) var(--pct));
+  --text-main: color-mix(in oklab, #efe2cf, var(--ink) var(--pct));
+  --text-muted: color-mix(in oklab, #b9a890, var(--ink-soft) var(--pct));
+
+  background: var(--surface-page);
+  color: var(--text-main);
+  transition: --lit 1.3s var(--ease-soft);
+  perspective: 1400px;
+  perspective-origin: 50% 64%;
+  display: grid;
+  place-items: center;
+}
+
+.story-stage.is-lit {
+  --lit: 1;
+}
+
+/* Browsers without @property/color-mix still get a usable flood. */
+@supports not (background: color-mix(in oklab, red, blue 50%)) {
+  .story-stage {
+    background: #14110f;
+    color: #efe2cf;
+  }
+  .story-stage.is-lit {
+    background: #f6ead2;
+    color: #3a2c22;
+  }
+}
