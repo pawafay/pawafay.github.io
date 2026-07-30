@@ -23,6 +23,23 @@ Issues opened by anyone else are ignored entirely: the workflow checks the autho
 against the repo owner before it runs a single step. That check is the only thing
 standing between the outside world and this mailbox, so don't loosen it.
 
+### Taking one back down
+
+**Remove the `surat` label.** The letter comes off the site within a minute. Put
+the label back and it returns — same date, same URL, same place in the rack,
+because the date comes from when the issue was *created*, not from today. The
+label is the published switch, nothing more.
+
+Only letters written by an issue can be removed this way; they're found by the
+`issue:` key in their frontmatter, so a letter you committed by hand is never
+touched. To remove one of those, delete its folder and push.
+
+> **Off the site is not erased.** The letter stays in this repo's git history and
+> the repo is public, so anyone who digs through old commits can still read it —
+> photos included. The issue and its uploaded images stay on GitHub too. If
+> something must never be readable by anyone else, don't send it through here in
+> the first place; there is no undo that reaches far enough.
+
 ---
 
 ## Way 2 — commit a folder yourself

@@ -1,11 +1,13 @@
 name: Sync letters from issues
 
 # Write a letter by opening an issue labelled `surat`. This turns it into a folder
-# under src/letters/ and publishes it. See src/letters/_FORMAT.md.
+# under src/letters/ and publishes it. Take the `surat` label off again and the
+# letter comes back down; put it back and it returns, same date and all. See
+# src/letters/_FORMAT.md.
 
 on:
   issues:
-    types: [opened, edited, labeled]
+    types: [opened, edited, labeled, unlabeled]
 
 # Deny by default; each job asks for the least it needs.
 permissions: {}
@@ -130,6 +132,75 @@ jobs:
         run: |
           gh issue comment "$ISSUE_NUMBER" \
             --body "Could not publish this one. Log: ${RUN_URL}" || true
+
+  # The `surat` label came off: take the letter back down. Re-adding the label
+  # fires `labeled` and the sync job above rebuilds it — and because the date comes
+  # from the issue's created_at rather than today, it returns to the same place in
+  # the rack under the same URL. So the label is simply the published switch.
+  #
+  # Note what this does NOT do: the letter stays in git history, and this repo is
+  # public. Taking it off the site is not erasing it.
+  unpublish:
+    # sender is the one that matters here — it is who *removed the label*, which is
+    # the action being trusted. issue.user is checked too so this can only ever
+    # touch letters from your own issues.
+    if: >-
+      github.event.action == 'unlabeled' &&
+      github.event.label.name == 'surat' &&
+      github.event.sender.login == github.repository_owner &&
+      github.event.issue.user.login == github.repository_owner
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      actions: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Remove the letter
+        id: remove
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: node .github/scripts/unpublish-letter.mjs
+
+      - name: Commit
+        id: commit
+        if: steps.remove.outputs.removed == 'true'
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A src/letters
+          if git diff --cached --quiet; then
+            echo 'pushed=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git commit -m "letters: unpublish issue #${ISSUE_NUMBER}"
+          git push
+          echo 'pushed=true' >> "$GITHUB_OUTPUT"
+
+      - name: Trigger the deploy
+        if: steps.commit.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run deploy.yml --ref main
+
+      - name: Say so on the issue
+        if: steps.commit.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          body='Taken off the site. Add the `surat` label again to put it back.'
+          body="${body}"$'\n\n'"It is still in this repo's git history, and the repo is public — taking it down is not the same as erasing it."
+          gh issue edit "$ISSUE_NUMBER" --remove-label published || true
+          gh issue comment "$ISSUE_NUMBER" --body "$body"
 
   # Someone else opened a `surat` issue. Runs on untrusted input, so it touches
   # nothing: no checkout, no repo contents, no issue text — just a fixed string.
