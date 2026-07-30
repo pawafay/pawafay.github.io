@@ -20,6 +20,11 @@ import './styles/keyframes.css'
 import './styles/paper.css'
 
 import App from './App.tsx'
+import { initAnalytics } from './lib/analytics'
+
+// Before render, so the visit is recorded even if the reader leaves during the
+// first paint. A no-op unless config.analyticsId is set.
+initAnalytics()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
