@@ -17,6 +17,7 @@ import '@fontsource/itim/thai-400.css'
 import './styles/theme.css'
 import './styles/base.css'
 import './styles/keyframes.css'
+import './styles/paper.css'
 
 import App from './App.tsx'
 

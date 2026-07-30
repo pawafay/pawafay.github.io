@@ -45,8 +45,44 @@ the site is served from. Leave a path out → a hand-drawn placeholder is shown 
 the layout stays identical when the real photo is added later.
 
 > Music and sound effects only start **after** the switch is flipped (a user
-> gesture), which is required for autoplay on iOS. A sound on/off toggle is in
-> the top-right corner and is remembered across visits.
+> gesture), which is required for autoplay on iOS.
+
+## The mailbox
+
+Below the closing envelope there is a rack of dated letters. Each envelope shows
+its date as a postmark (`yyyy-mm-dd`); clicking one takes over the screen with the
+letter drawn out of its envelope, and up to three photos taped underneath.
+Envelopes you haven't opened keep an intact wax seal and an airmail edge; opened
+ones show a cracked seal. That's remembered per browser, in `localStorage`.
+
+An open letter is a real URL — `…/#/mail/<folder-name>` — so it can be linked
+directly, the browser and Android back buttons close it, and a shared link skips
+the intro and lands on the letter.
+
+One letter is one folder in [`src/letters/`](src/letters/):
+
+```
+src/letters/2026-07-30-the-first-one/
+  index.md      ← frontmatter + the letter
+  1.jpg         ← optional, max 3, auto-detected
+```
+
+Full format notes, both authoring paths, and the gotchas are in
+[`src/letters/_FORMAT.md`](src/letters/_FORMAT.md). The short version:
+
+**Write from your phone** — open an issue labelled `surat`, drag in photos, submit.
+[`sync-letters.yml`](.github/workflows/sync-letters.yml) downscales the photos,
+strips their EXIF, commits the folder and triggers a deploy. It only ever acts on
+issues that you both wrote and saved; anyone else's are closed untouched.
+
+**Write from the repo** — create the folder, commit, push. The folder name must
+start with `yyyy-mm-dd-`.
+
+> Letter photos are the single exception to the "assets live in `public/`" rule
+> above. `public/` is copied verbatim and is invisible to `import.meta.glob`, so a
+> folder in there can't be auto-detected — see the comment at the top of
+> [`src/lib/letters.ts`](src/lib/letters.ts). Everything else still goes through
+> `asset()`.
 
 ## Develop
 
@@ -91,4 +127,5 @@ served from `/<repo>/`, which means setting `base: '/<repo>/'` or every asset 40
   events.
 - Respects `prefers-reduced-motion`: all ten story beats still play, but loops,
   parallax, and the confetti storm are toned down.
-- `Skip ›` (bottom-right) jumps straight to the party.
+- A `#/mail/<folder>` link skips the intro and opens that letter directly, which
+  is the quickest way to get to the party while working on it.

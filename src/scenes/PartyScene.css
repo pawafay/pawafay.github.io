@@ -76,6 +76,14 @@
   width: min(72vw, 320px);
 }
 
+/* ---- the mailbox ----
+   Full column width, and a clear gap above so the closing envelope still reads
+   as the end of the story rather than the first item in the rack. */
+.party-scene__mailbox {
+  width: 100%;
+  margin-block-start: clamp(0.5rem, 3vh, 1.75rem);
+}
+
 /* ---- pop-up cascade ---- */
 .pop-layer {
   transform-origin: 50% 100%;

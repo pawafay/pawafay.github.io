@@ -8,6 +8,13 @@ import './TapedPhoto.css'
 
 interface TapedPhotoProps {
   src?: string
+  /**
+   * An already-final URL — used by mailbox letters, whose photos are emitted and
+   * hashed by Vite rather than copied out of public/. It skips asset(), which
+   * would otherwise prepend BASE_URL a second time and 404 the day this stops
+   * being a user site served from '/'. Wins over `src` when both are given.
+   */
+  resolvedSrc?: string
   caption?: string
   shape?: PhotoShape
   tapeStyle?: TapeStyle
@@ -24,6 +31,7 @@ interface TapedPhotoProps {
 /** Shared taped/scrapbook photo — powers the hero photo and every sticker. */
 export function TapedPhoto({
   src,
+  resolvedSrc,
   caption,
   shape = 'polaroid',
   tapeStyle = 'single',
@@ -34,7 +42,7 @@ export function TapedPhoto({
   className = '',
 }: TapedPhotoProps) {
   const rot = rotation ?? seededRotation(seed)
-  const resolved = asset(src)
+  const resolved = resolvedSrc ?? asset(src)
 
   return (
     <figure

@@ -22,6 +22,11 @@ export function useStoryMachine(reducedMotion: boolean) {
     return () => window.clearTimeout(id)
   }, [state.phase, reducedMotion])
 
+  // Used by a deep link into a mailbox letter: the reader followed a link to one
+  // specific letter, so the intro would be in the way. GOTO alone is enough —
+  // `flipped` is only read by DarkScene, which is unmounted at PARTY, and leaving
+  // audio locked is correct since there has been no gesture to unlock it with.
+  const skipToParty = useCallback(() => dispatch({ type: 'GOTO', phase: 'PARTY' }), [])
   const advance = useCallback(() => dispatch({ type: 'ADVANCE' }), [])
   const flip = useCallback(() => dispatch({ type: 'FLIP' }), [])
   const ignited = useCallback(() => dispatch({ type: 'IGNITED' }), [])
@@ -37,7 +42,8 @@ export function useStoryMachine(reducedMotion: boolean) {
       ignited,
       openLetter,
       closeLetter,
+      skipToParty,
     }),
-    [state.phase, state.flipped, advance, flip, ignited, openLetter, closeLetter],
+    [state.phase, state.flipped, advance, flip, ignited, openLetter, closeLetter, skipToParty],
   )
 }
