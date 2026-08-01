@@ -109,7 +109,11 @@ function proseOf(body) {
     .trim()
 }
 
-/** `magick` on ImageMagick 7, `convert` on 6 — runner images have shipped both. */
+/**
+ * `magick` on ImageMagick 7, `convert` on 6 — Ubuntu's apt package is 6, so in CI
+ * this finds `convert`. The workflow installs it; see the "Install ImageMagick"
+ * step in .github/workflows/sync-letters.yml if this ever fails again.
+ */
 function magickBinary() {
   for (const bin of ['magick', 'convert']) {
     try {
@@ -119,7 +123,9 @@ function magickBinary() {
       /* try the next one */
     }
   }
-  return fail('ImageMagick is not available on this runner')
+  return fail(
+    'ImageMagick is not available — the workflow should have installed it (see the "Install ImageMagick" step)',
+  )
 }
 
 async function downloadPhoto(url, index, intoDir, bin) {

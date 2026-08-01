@@ -5,9 +5,13 @@ name: Sync letters from issues
 # letter comes back down; put it back and it returns, same date and all. See
 # src/letters/_FORMAT.md.
 
+# No `opened` on purpose. Creating an issue with the `surat` label already ticked
+# fires BOTH `opened` and `labeled`, and both pass the gate below — two runs for
+# one letter, the second of which used to die on a rejected push. `labeled` alone
+# covers every way a letter gets published: ticked at creation, or added later.
 on:
   issues:
-    types: [opened, edited, labeled, unlabeled]
+    types: [edited, labeled, unlabeled]
 
 # Deny by default; each job asks for the least it needs.
 permissions: {}
@@ -38,19 +42,43 @@ jobs:
     # becomes MEMBER while repository_owner becomes the org, so the gate stops
     # matching and nothing runs. That is deliberate — but it will look like a
     # mystery bug one day, so it is written down here.
+    #
+    # The last clause is housekeeping rather than security: labelling a letter
+    # `wip` would otherwise rebuild it for nothing.
     if: >-
       github.event.issue.user.login == github.repository_owner &&
       github.event.sender.login == github.repository_owner &&
       github.event.issue.author_association == 'OWNER' &&
-      contains(github.event.issue.labels.*.name, 'surat')
+      contains(github.event.issue.labels.*.name, 'surat') &&
+      (github.event.action != 'labeled' || github.event.label.name == 'surat')
     runs-on: ubuntu-latest
     permissions:
       contents: write # commit the letter
       issues: write # comment back + label
       actions: write # dispatch deploy.yml (see "Trigger the deploy" below)
     steps:
+      # `ref` matters. Without it checkout takes the SHA carried by the *event*,
+      # which is main as it was when the issue was saved — so a run that waited its
+      # turn in the concurrency queue starts from a branch tip that has since moved,
+      # rebuilds the letter as if it were new, and has its push rejected. Naming the
+      # branch fetches whatever the tip is when this job actually runs, which makes a
+      # duplicate run a clean no-op instead of a failure.
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: main
+
+      # ImageMagick used to come preinstalled on the runner. `ubuntu-latest` moved
+      # to 24.04, whose image dropped it, and the job started failing with
+      # "ImageMagick is not available on this runner". Installing it here rather
+      # than pinning ubuntu-22.04, which is on its way out, and rather than adding
+      # an npm image library, which would put a native dependency in the path of
+      # something holding `contents: write`.
+      - name: Install ImageMagick
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends imagemagick
 
       - name: Build the letter
         id: build
@@ -155,8 +183,11 @@ jobs:
       issues: write
       actions: write
     steps:
+      # Same reason as the sync job: check out the branch tip, not the event's SHA.
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Remove the letter
         id: remove
@@ -202,12 +233,15 @@ jobs:
           gh issue edit "$ISSUE_NUMBER" --remove-label published || true
           gh issue comment "$ISSUE_NUMBER" --body "$body"
 
-  # Someone else opened a `surat` issue. Runs on untrusted input, so it touches
-  # nothing: no checkout, no repo contents, no issue text — just a fixed string.
+  # A `surat` issue that isn't yours. Keyed on `labeled` rather than `opened` now
+  # that `opened` is not a trigger — same coverage for an issue created with the
+  # label, and it additionally catches the label being put on someone else's issue
+  # after the fact. Runs on untrusted input, so it touches nothing: no checkout, no
+  # repo contents, no issue text — just a fixed string.
   reject:
     if: >-
-      github.event.action == 'opened' &&
-      contains(github.event.issue.labels.*.name, 'surat') &&
+      github.event.action == 'labeled' &&
+      github.event.label.name == 'surat' &&
       github.event.issue.user.login != github.repository_owner
     runs-on: ubuntu-latest
     permissions:
