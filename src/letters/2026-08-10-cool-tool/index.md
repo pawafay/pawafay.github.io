@@ -12,7 +12,7 @@ I bought something today, idk how to explain this. But this tool can be used to 
 
 The cool thing is, this has a camera, so you can connect it with your phone, then you could see what's inside your faking ear 👂 through your phone.... Cool right 😎 
 
-Here's the photo
+I put the photo below in case you're curious.
 
 Okkie that's all that i wanted to share,
 Have a good day ☀️
