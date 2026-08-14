@@ -1,5 +1,5 @@
 ---
-title: 2nd week of August
+title: August 2nd week
 date: 2026-08-14
 issue: 10
 ---
