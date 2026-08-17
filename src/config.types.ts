@@ -66,6 +66,14 @@ export interface StoryConfig {
    * gesture, whatever we do).
    */
   showIntro?: boolean
+  /**
+   * The birthday letter — the sealed envelope at the foot of the party and the
+   * note it opens (the `greeting` block below). `false` hides both, leaving the
+   * rest of the party untouched. Defaults to `true`.
+   *
+   * The mailbox and its letters are separate and stay put either way.
+   */
+  showGreeting?: boolean
   /** Hero photo path under /public; omit → drawn placeholder. */
   heroPhoto?: string
   stickers: StickerConfig[]

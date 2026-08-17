@@ -25,6 +25,11 @@ export const config: StoryConfig = {
   //   tap or key press anywhere on the page instead. —
   showIntro: false,
 
+  // — The sealed envelope and the birthday letter inside it (the `greeting`
+  //   block further down). false → no envelope, no letter; the rest of the
+  //   party is unchanged, and the mailbox keeps working either way. —
+  showGreeting: true,
+
   // — Hero photo (centre stage). Omit `heroPhoto` to use the placeholder.
   heroPhoto: 'images/main_photo.jpg',
 
@@ -38,7 +43,7 @@ export const config: StoryConfig = {
     switchHint: 'click the switch to light up the room',
   },
 
-  // — The letter inside the envelope —
+  // — The letter inside the envelope (ignored when `showGreeting` is false) —
   greeting: {
     salutation: 'To Human that live far away 🐖,',
     body: [
@@ -49,7 +54,7 @@ export const config: StoryConfig = {
     ],
     signoff: 'With love,',
     // ↓ YOUR name — the handwritten signature at the bottom of the letter.
-    signature: 'Lord Dave 😼👑',
+    signature: 'someone 😼',
   },
 
   // — Scattered memory stickers. Add `src` to use a real photo; omit for a
