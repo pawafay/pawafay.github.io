@@ -29,6 +29,9 @@ export function PartyScene({ phase, reduced, openLetter, closeLetter }: PartySce
   const parallax = usePointerParallax(!reduced)
   const envelopeRef = useRef<HTMLButtonElement>(null)
   const wasOpen = useRef(false)
+  // `showGreeting: false` takes the envelope away, and the envelope is the only
+  // thing that can open the letter — so the LETTER phase is simply unreachable.
+  const showGreeting = config.showGreeting !== false
   const letterOpen = phase === 'LETTER'
 
   // Return focus to the envelope when the letter closes.
@@ -85,19 +88,26 @@ export function PartyScene({ phase, reduced, openLetter, closeLetter }: PartySce
             <Cake candleCount={config.candleCount} />
           </div>
 
-          <div className="party-scene__envelope pop-layer" style={{ '--i': 3 } as CSSProperties}>
-            <Envelope ref={envelopeRef} onOpen={openLetter} />
-          </div>
+          {showGreeting && (
+            <div className="party-scene__envelope pop-layer" style={{ '--i': 3 } as CSSProperties}>
+              <Envelope ref={envelopeRef} onOpen={openLetter} />
+            </div>
+          )}
 
           {hasMail && (
-            <div className="party-scene__mailbox pop-layer" style={{ '--i': 4 } as CSSProperties}>
+            // Steps up when there is no envelope above it, so the pop-up
+            // cascade stays gapless.
+            <div
+              className="party-scene__mailbox pop-layer"
+              style={{ '--i': showGreeting ? 4 : 3 } as CSSProperties}
+            >
               <Mailbox />
             </div>
           )}
         </div>
       </div>
 
-      {letterOpen && <Letter onClose={closeLetter} />}
+      {showGreeting && letterOpen && <Letter onClose={closeLetter} />}
     </div>
   )
 }
