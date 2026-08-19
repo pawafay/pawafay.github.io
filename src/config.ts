@@ -90,7 +90,7 @@ export const config: StoryConfig = {
 
   // — Audio. Drop files in /public/audio and uncomment. Music only starts after
   //   the switch is flipped (a user gesture), which is required on iOS. —
-  musicPath: 'audio/thai_hbd_song.mp3',
+  musicPath: 'audio/music.mp3',
   // sfx: {
   //   switch: 'audio/click.mp3',
   //   pop: 'audio/pop.mp3',
