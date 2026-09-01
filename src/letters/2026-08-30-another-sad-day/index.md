@@ -6,7 +6,9 @@ issue: 18
 
 Hiiiii,
 
-I wish I could be the only one. Someone you choose in every situation, not only when you’re bored or lonely. Someone you would still choose even when there are other people around.
+I can only tell my feelings here, bcs I'm too scared to tell you directly.
+
+I wish I could be someone you would still choose even when there are other people around.
 
 I know that if there’s someone else, you’d probably leave me and go to them. And that’s totally up to you, and it’s fine. You’re free to choose whoever you want. The problem is that I’ve already fallen too deeply in love with you, and that's my own problem, not yours
 
