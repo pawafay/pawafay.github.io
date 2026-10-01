@@ -1,0 +1,179 @@
+/* A voice note taped into a letter.
+
+   Like the rest of MailLetter.css this renders in a portal outside .story-stage,
+   so only :root tokens and literal colours resolve here. */
+
+.voice-note {
+  --progress: 0;
+  --wave-ink: color-mix(in oklab, var(--ink-soft, #6a5341), transparent 62%);
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  inline-size: min(100%, 26rem);
+  padding: 0.6rem 0.95rem 0.6rem 0.6rem;
+  rotate: var(--tilt, 0deg);
+  /* A memo card: a shade warmer than the letter paper, so it reads as stuck on. */
+  background:
+    linear-gradient(175deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0) 55%),
+    var(--lit-white, #fffaf0);
+  border: 1px solid rgba(160, 120, 70, 0.18);
+  border-radius: 12px;
+  box-shadow:
+    0 1px 1px rgba(60, 35, 15, 0.12),
+    0 6px 14px rgba(60, 35, 15, 0.14);
+}
+
+/* Washi tape across the top-left corner, holding the card onto the page. */
+.voice-note__tape {
+  position: absolute;
+  top: -0.5rem;
+  left: 1.1rem;
+  inline-size: 3.4rem;
+  block-size: 1rem;
+  rotate: -5deg;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0)),
+    var(--tape, rgba(247, 236, 205, 0.55));
+  border-inline: 1px solid var(--tape-edge, rgba(120, 96, 60, 0.25));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  pointer-events: none;
+}
+
+/* ---- play / pause ---- */
+.voice-note__play {
+  position: relative;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  inline-size: 2.6rem;
+  block-size: 2.6rem;
+  border-radius: 50%;
+  color: var(--lit-white, #fffaf0);
+  background: radial-gradient(circle at 35% 30%, #f290a6, var(--rose, #e8728c) 55%, #c9506d);
+  box-shadow:
+    0 3px 7px rgba(180, 60, 90, 0.35),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.18),
+    inset 0 2px 2px rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: scale 0.2s var(--ease-pop);
+}
+.voice-note__play svg {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  fill: currentColor;
+}
+.voice-note__play:active {
+  scale: 0.92;
+}
+.voice-note__play:focus-visible {
+  outline: 2px dashed var(--rose, #e8728c);
+  outline-offset: 3px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .voice-note__play:hover {
+    scale: 1.06;
+  }
+}
+
+/* Buffering: a ring chasing round the button. */
+.voice-note.is-waiting .voice-note__play::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--rose, #e8728c);
+  border-block-start-color: transparent;
+  animation: voice-note-spin 0.8s linear infinite;
+}
+@keyframes voice-note-spin {
+  to {
+    rotate: 1turn;
+  }
+}
+
+/* ---- the waveform ---- */
+.voice-note__wave {
+  container: voice-wave / inline-size;
+  position: relative;
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  block-size: 2.1rem;
+  cursor: pointer;
+  /* Vertical swipes still scroll the letter; only sideways drags scrub. */
+  touch-action: pan-y;
+  border-radius: 4px;
+}
+.voice-note__wave:focus-visible {
+  outline: 2px dashed var(--rose, #e8728c);
+  outline-offset: 4px;
+}
+
+.voice-note__bars {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+}
+.voice-note__bars > span {
+  flex: 1 1 0;
+  block-size: calc(var(--h, 0.5) * 100%);
+  min-block-size: 3px;
+  border-radius: 99px;
+  background: var(--wave-ink);
+}
+
+/* The same bars again in ink, uncovered left to right as it plays. */
+.voice-note__bars--played {
+  clip-path: inset(0 calc((1 - var(--progress)) * 100%) 0 0);
+}
+.voice-note__bars--played > span {
+  background: var(--rose, #e8728c);
+}
+
+/* A narrow phone can't fit every bar legibly: draw every other one. */
+@container voice-wave (width < 190px) {
+  .voice-note__bars > span:nth-child(even) {
+    display: none;
+  }
+}
+
+/* ---- the time ---- */
+.voice-note__time {
+  flex: 0 0 auto;
+  min-inline-size: 2.4em;
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: clamp(0.78rem, 3.2vw, 0.9rem);
+  letter-spacing: 0.04em;
+  text-align: end;
+  color: var(--ink-soft, #6a5341);
+}
+.voice-note.is-playing .voice-note__time {
+  color: #b23a5b;
+}
+.voice-note.is-failed .voice-note__time {
+  font-family: var(--font-hand);
+  font-size: 1.05rem;
+  letter-spacing: 0;
+  color: #b23a5b;
+}
+
+.voice-note audio {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .voice-note__play {
+    transition: none;
+  }
+  .voice-note.is-waiting .voice-note__play::after {
+    animation: none;
+    border-block-start-color: var(--rose, #e8728c);
+    opacity: 0.5;
+  }
+}

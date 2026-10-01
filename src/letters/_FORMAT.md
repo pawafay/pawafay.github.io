@@ -8,12 +8,36 @@ Two ways. Both end up as the same thing: a folder in here.
 
 1. Open a new issue in this repo **from your own account**.
 2. Give it the label **`surat`**.
-3. Title = the letter's title. Body = the letter. Drag in up to **3 photos**.
+3. Title = the letter's title. Body = the letter. Drag in photos (up to **10**)
+   and voice notes (**.mp3** or **.wav**, as many as you like) **wherever you
+   want them to appear** — between two paragraphs, after the first line, at the
+   very end. The letter shows them in exactly that order.
 4. Submit.
 
 [`.github/workflows/sync-letters.yml`](../../.github/workflows/sync-letters.yml)
-picks it up, downloads and compresses the photos, commits the folder, and kicks
+picks it up, downloads the photos and voice notes, commits the folder, and kicks
 off a deploy. It comments back on the issue with the live link when it's done.
+
+The text is optional: a letter can be just a photo, or just a voice note.
+
+### What happens to your files
+
+- **Photos** are resized to at most 1600px and stripped of their metadata
+  (phone photos carry GPS coordinates, and this repo is public).
+- **Voice notes are never re-encoded** — the voice that plays is the voice you
+  recorded:
+  - an **.mp3** is kept exactly as it is. Only its ID3 tags (title, recorder
+    app, that kind of metadata) are cut off; the audio itself is untouched.
+  - a **.wav** becomes **.flac**, which is lossless: it decodes back to exactly
+    the same audio, bit for bit, at about half the size. (A 32-bit or float WAV,
+    which FLAC can't hold exactly, is kept as a WAV instead.)
+- The workflow also measures each voice note's **length and waveform**, so the
+  player looks complete before anything is downloaded. Nothing is: a voice note
+  only starts loading when play is pressed, and it streams, so even a long one
+  starts straight away.
+
+GitHub only accepts **.mp3** and **.wav** audio in issues, up to 25 MB each.
+Voice memos from an iPhone are .m4a — convert them to .mp3 first.
 
 The date on the envelope is the date the **issue** was created, in Asia/Jakarta
 time. Editing the issue later updates the same letter — it won't create a
@@ -48,8 +72,10 @@ touched. To remove one of those, delete its folder and push.
 src/letters/
   2026-07-30-the-first-one/
     index.md          ← the letter
-    1.jpg             ← optional photos, max 3
+    1.jpg             ← optional photos, max 10
     2.jpg
+    voice-1.mp3       ← optional voice notes (.mp3, .wav or .flac)
+    voice-1.json      ← optional: its length and waveform
 ```
 
 The folder name **must** start with `yyyy-mm-dd-`. That date is what shows on the
@@ -93,31 +119,68 @@ A letter committed by hand has no issue number and so nothing to compare with;
 it sits after the issue-written letters of the same day. If that matters, give
 it a `date` a day later, or write it as an issue instead.
 
-### Photos
+### Photos and voice notes
 
-Drop image files straight into the letter's folder — no need to mention them
-anywhere. `.jpg`, `.jpeg`, `.png`, `.webp` and `.avif` are picked up, sorted by
-filename, and the **first 3** are used. Name them `1.jpg`, `2.jpg`, `3.jpg` if
-you care about the order.
+Drop the files into the letter's folder. Images are `.jpg`, `.jpeg`, `.png`,
+`.webp` and `.avif`; voice notes are `.mp3`, `.wav` and `.flac`.
 
-> A 4th image is not shown — but it **is still deployed**. Vite bundles every
-> image it finds in the folder; the 3-photo cap is applied afterwards, when the
+To put one at a particular spot in the letter, write an **embed line** there —
+`![](` + the filename + `)`:
+
+```markdown
+Hiii, I recorded something for you
+
+![](voice-1.mp3)
+
+and here's where I recorded it:
+
+![](1.jpg)
+![](2.jpg)
+
+see you soon
+```
+
+Photos on consecutive lines share a row. That's how the issue workflow writes
+every letter now.
+
+A file that no embed line places still shows up, **after** the letter: voice
+notes first, then photos, sorted by filename (name them `1.jpg`, `2.jpg` … if you
+care about the order). That's also how every letter written before embeds
+existed keeps looking exactly the way it did.
+
+At most **10 photos** are shown.
+
+> An 11th image is not shown — but it **is still deployed**. Vite bundles every
+> image it finds in the folder; the photo cap is applied afterwards, when the
 > letter is rendered. So delete the ones you don't want rather than leaving them
 > lying around, or you'll ship megabytes nobody ever sees.
 
-These photos are the one place in this project where assets live under `src/`
+A voice note's `.json` (same name, e.g. `voice-1.json`) holds its length and
+waveform:
+
+```json
+{ "duration": 42.31, "peaks": [0.12, 0.4, 0.86, "… one number 0–1 per bar"] }
+```
+
+The issue workflow writes it for you. Without one the player draws decorative
+bars, and the browser reads the length from the file itself.
+
+These files are the one place in this project where assets live under `src/`
 instead of `public/`. That's what makes the auto-detection possible — see the
 comment at the top of [`src/lib/letters.ts`](../lib/letters.ts).
 
-> Photos you commit by hand are **not** compressed or stripped of EXIF — resize
-> them first, and remember phone photos carry GPS coordinates and this repo is
-> public. The issue workflow does both for you automatically.
+> Files you commit by hand are **not** processed — photos aren't resized or
+> stripped of EXIF, voice notes keep their tags. Remember phone photos carry GPS
+> coordinates and this repo is public. The issue workflow does all of it for
+> you automatically.
 
 ---
 
 ## If a letter doesn't appear
 
-The loader wants a valid date and some body text. When something's off:
+The loader wants a valid date, and some text or at least one photo or voice
+note. An embed line naming a file that isn't in the folder loses just that one
+piece, not the letter. When something's off:
 
 - **`bun run dev`** throws immediately and the error names the folder.
 - **In production** the bad letter is skipped, the rest still render, and the
