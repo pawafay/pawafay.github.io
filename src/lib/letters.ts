@@ -33,7 +33,9 @@ const PHOTOS = import.meta.glob('../letters/*/*.{jpg,jpeg,png,webp,avif}', {
   import: 'default',
 }) as Record<string, string>
 
-const VOICES = import.meta.glob('../letters/*/*.{mp3,wav,flac}', {
+// .mp3 and .wav only — the two audio types GitHub Pages serves under names
+// every iPhone plays (see saveVoice in .github/scripts/sync-letter.mjs).
+const VOICES = import.meta.glob('../letters/*/*.{mp3,wav}', {
   eager: true,
   import: 'default',
 }) as Record<string, string>

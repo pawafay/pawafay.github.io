@@ -32,142 +32,152 @@ export interface AudioApi {
 
 /** Safari before 14.1 only ships the prefixed constructor. */
 type LegacyWindow = Window & { webkitAudioContext?: typeof AudioContext }
-/** The Audio Session API — Safari 17+, not in TypeScript's DOM lib yet. */
+/** The Audio Session API — Safari 16.4+, not in TypeScript's DOM lib yet. */
 type SessionNavigator = Navigator & { audioSession?: { type: string } }
-
-interface MusicGraph {
-  ctx: AudioContext
-  gain: GainNode
-}
 
 /**
  * Owns background music + SFX. Autoplay-safe: nothing plays until unlock().
  *
- * The music's loudness is set through a Web Audio GainNode rather than the
- * element's own volume, because iOS makes HTMLMediaElement.volume read-only —
- * there, every fade (and ducking under a voice note) was silently a no-op and
- * the track simply played at full volume. If Web Audio can't be set up, the
- * element volume is still used, so other browsers lose nothing.
+ * The music is decoded into memory and played through Web Audio, not an <audio>
+ * element, and both halves of that are for iOS:
+ *
+ *   - Its loudness can only be changed there through a GainNode — iOS makes
+ *     HTMLMediaElement.volume read-only, so every fade, and sinking under a voice
+ *     note, was silently a no-op and the track just played at full volume.
+ *   - The other way to reach a GainNode, routing the element through
+ *     createMediaElementSource, is the one path WebKit keeps breaking on iOS:
+ *     silent on 17.0.x, crackling or choppy on earlier releases. A decoded buffer
+ *     has none of that history, and loops without a gap besides.
+ *
+ * The track is under a megabyte, so holding it decoded costs little.
  */
 export function useAudioController(): AudioApi {
   const [ready, setReady] = useState(false)
-  const musicRef = useRef<HTMLAudioElement | null>(null)
-  const graphRef = useRef<MusicGraph | null>(null)
-  const graphTriedRef = useRef(false)
-  const fadeRef = useRef(0)
+  const ctxRef = useRef<AudioContext | null>(null)
+  const gainRef = useRef<GainNode | null>(null)
+  const bytesRef = useRef<Promise<ArrayBuffer> | null>(null)
+  /** The track has been asked to start — set once, cleared only if starting fails. */
+  const startedRef = useRef(false)
   const voicesRef = useRef(new Set<string>())
   const unduckRef = useRef(0)
 
   /** Where the music should sit right now. */
   const level = useCallback(() => (voicesRef.current.size > 0 ? DUCK_VOLUME : MUSIC_VOLUME), [])
 
-  const fadeTo = useCallback((target: number, ms = FADE_MS) => {
-    const graph = graphRef.current
-    if (graph) {
-      // Start the ramp from wherever the gain is right now, even mid-fade, so a
-      // duck that interrupts a fade-in doesn't jump.
-      const param = graph.gain.gain
-      const now = graph.ctx.currentTime
-      param.cancelScheduledValues(now)
-      param.setValueAtTime(param.value, now)
-      param.linearRampToValueAtTime(target, now + ms / 1000)
-      return
-    }
-    const el = musicRef.current
-    if (!el) return
-    window.clearInterval(fadeRef.current)
-    const from = el.volume
-    const start = performance.now()
-    fadeRef.current = window.setInterval(() => {
-      const t = Math.min(1, (performance.now() - start) / ms)
-      el.volume = from + (target - from) * t
-      if (t >= 1) window.clearInterval(fadeRef.current)
-    }, 30)
+  /**
+   * The track's bytes, fetched once. Kicked off on mount so they're in hand by
+   * the time the switch is flipped; decoding has to wait for the first gesture,
+   * because that is when the context it decodes into may be created.
+   */
+  const fetchMusic = useCallback((): Promise<ArrayBuffer> | null => {
+    if (bytesRef.current) return bytesRef.current
+    const src = config.musicPath ? asset(config.musicPath) : undefined
+    if (!src) return null
+    const bytes = fetch(src).then((response) => {
+      if (!response.ok) throw new Error(`music: HTTP ${response.status}`)
+      return response.arrayBuffer()
+    })
+    bytesRef.current = bytes
+    bytes.catch(() => {
+      bytesRef.current = null // a network hiccup — the next unlock fetches again
+    })
+    return bytes
   }, [])
 
-  /** The music is audible: latch `ready` and bring it up to where it belongs. */
-  const settle = useCallback(() => {
-    setReady(true)
-    fadeTo(level())
-  }, [fadeTo, level])
+  const fadeTo = useCallback((target: number, ms = FADE_MS) => {
+    const ctx = ctxRef.current
+    const gain = gainRef.current
+    if (!ctx || !gain) return
+    // Start the ramp from wherever the gain is right now, even mid-fade, so a
+    // duck that interrupts a fade-in doesn't jump.
+    const param = gain.gain
+    const now = ctx.currentTime
+    param.cancelScheduledValues(now)
+    param.setValueAtTime(param.value, now)
+    param.linearRampToValueAtTime(target, now + ms / 1000)
+  }, [])
 
-  /**
-   * Routes the music element through a GainNode — once, and inside a gesture,
-   * because a context created anywhere else starts suspended. From here on the
-   * element plays at full volume and the gain is the only volume control.
-   */
-  const connectGraph = useCallback(
-    (el: HTMLAudioElement) => {
-      if (graphTriedRef.current) return
-      graphTriedRef.current = true
-      const Context = window.AudioContext ?? (window as LegacyWindow).webkitAudioContext
-      if (!Context) return
-      try {
-        // Web Audio on iOS defaults to the "ambient" session, which the ringer
-        // switch mutes — a plain <audio> never was. "playback" keeps the music
-        // behaving as it did before it was routed through here.
-        const session = (navigator as SessionNavigator).audioSession
-        if (session) session.type = 'playback'
-
-        const ctx = new Context()
-        const gain = ctx.createGain()
-        gain.gain.value = 0
-        ctx.createMediaElementSource(el).connect(gain).connect(ctx.destination)
-        window.clearInterval(fadeRef.current) // a fallback fade must not fight the gain
-        el.volume = 1
-        graphRef.current = { ctx, gain }
-
-        // The context may start running only on a later gesture (or come back
-        // after iOS interrupted it). Whenever it does, the music is audible.
-        ctx.addEventListener('statechange', () => {
-          if (ctx.state === 'running' && !el.paused) settle()
-        })
-      } catch {
-        graphRef.current = null
-      }
-    },
-    [settle],
-  )
+  /** Wakes the context. Only succeeds inside a gesture on iOS, so call it from one. */
+  const wake = useCallback(() => {
+    const ctx = ctxRef.current
+    if (!ctx || ctx.state === 'running') return
+    ctx.resume().catch(() => {
+      /* not allowed yet — a later gesture will retry */
+    })
+    // Some iOS releases only count the gesture once a sound has actually started
+    // inside it. One silent sample is the long-standing way to make it count.
+    const blip = ctx.createBufferSource()
+    blip.buffer = ctx.createBuffer(1, 1, 22050)
+    blip.connect(ctx.destination)
+    blip.start(0)
+  }, [])
 
   const unlock = useCallback(() => {
     if (!config.musicPath) return
-    const src = asset(config.musicPath)
-    if (!src) return
-    // Reuse one element across retries so tracks never stack.
-    let el = musicRef.current
-    if (!el) {
-      el = new Audio(src)
-      el.loop = true
-      el.volume = 0
-      el.preload = 'auto'
-      musicRef.current = el
-    }
 
-    connectGraph(el)
-    const ctx = graphRef.current?.ctx
-    // Retried on every gesture until it takes: a browser that won't count this
-    // one as a gesture leaves the context suspended, and the music silent.
-    if (ctx && ctx.state !== 'running') {
-      ctx.resume().catch(() => {
-        /* not allowed yet — a later gesture will retry */
+    let ctx = ctxRef.current
+    if (!ctx) {
+      const Context = window.AudioContext ?? (window as LegacyWindow).webkitAudioContext
+      if (!Context) return
+      // Web Audio on iOS defaults to the "ambient" session, which the ringer
+      // switch mutes — a plain <audio> never was. "playback" keeps the music
+      // behaving like the <audio> it used to be. Must be set before the context
+      // exists.
+      const session = (navigator as SessionNavigator).audioSession
+      if (session) session.type = 'playback'
+      try {
+        ctx = new Context()
+      } catch {
+        return
+      }
+      const gain = ctx.createGain()
+      gain.gain.value = 0
+      gain.connect(ctx.destination)
+      ctxRef.current = ctx
+      gainRef.current = gain
+
+      // The context may only start running on a later gesture than the one that
+      // made it — or come back after iOS interrupted it.
+      const created = ctx
+      created.addEventListener('statechange', () => {
+        if (created.state === 'running' && startedRef.current) setReady(true)
       })
     }
 
-    // Already playing (or an attempt is in flight) — nothing to do.
-    if (!el.paused) return
-    // play() must run synchronously inside the gesture (iOS). Some browsers
-    // ignore pointerdown as an audio-unlocking gesture, so if it's rejected we
-    // retry on the next gesture instead of giving up (don't latch `ready`).
-    el.play()
-      .then(() => {
-        // With Web Audio, playing isn't the same as audible: a suspended context
-        // swallows it, and the statechange listener settles once it runs.
-        if (!ctx || ctx.state === 'running') settle()
+    wake()
+
+    // Already playing (or an attempt is in flight) — nothing more to do.
+    if (startedRef.current) return
+    const bytes = fetchMusic()
+    if (!bytes) return
+    startedRef.current = true
+
+    const context = ctx
+    bytes
+      // slice(): decoding detaches the buffer it is given, and a retry after a
+      // failed decode needs the bytes intact. The callback form is the one every
+      // Safari supports; the promise form only arrived in 14.1.
+      .then(
+        (data) =>
+          new Promise<AudioBuffer>((resolve, reject) =>
+            context.decodeAudioData(data.slice(0), resolve, reject),
+          ),
+      )
+      .then((buffer) => {
+        const source = context.createBufferSource()
+        source.buffer = buffer
+        source.loop = true
+        source.connect(gainRef.current ?? context.destination)
+        source.start()
+        // The fade is scheduled on the context's clock, so if it isn't running
+        // yet the music fades in the moment it does.
+        fadeTo(level())
+        if (context.state === 'running') setReady(true)
       })
       .catch(() => {
-        /* not unlocked yet — a later gesture will retry */
+        startedRef.current = false // a later gesture will retry
       })
-  }, [connectGraph, settle])
+  }, [fadeTo, fetchMusic, level, wake])
 
   const playSfx = useCallback((name: string) => {
     const path = config.sfx?.[name]
@@ -183,63 +193,54 @@ export function useAudioController(): AudioApi {
   const setVoicePlaying = useCallback(
     (id: string, playing: boolean) => {
       const voices = voicesRef.current
-      window.clearTimeout(unduckRef.current)
       if (playing) {
+        window.clearTimeout(unduckRef.current)
         voices.add(id)
-        const ctx = graphRef.current?.ctx
-        if (ctx && ctx.state !== 'running') {
-          ctx.resume().catch(() => {
-            /* not allowed outside a gesture — the play tap is one */
-          })
-        }
+        wake()
         fadeTo(DUCK_VOLUME, DUCK_MS)
         return
       }
-      voices.delete(id)
-      if (voices.size > 0) return
+      // A note that wasn't playing stopping (a closed letter tidying up) changes
+      // nothing — and mustn't cancel another note's pending return to full.
+      if (!voices.delete(id) || voices.size > 0) return
+      window.clearTimeout(unduckRef.current)
       unduckRef.current = window.setTimeout(() => fadeTo(MUSIC_VOLUME, UNDUCK_MS), UNDUCK_DELAY_MS)
     },
-    [fadeTo],
+    [fadeTo, wake],
   )
 
-  // Prime the music element during the intro so play() is instant on flip
-  // (the file buffers while the dark scene plays), then tidy up on unmount.
   useEffect(() => {
-    if (config.musicPath && !musicRef.current) {
-      const src = asset(config.musicPath)
-      if (src) {
-        const el = new Audio(src)
-        el.loop = true
-        el.volume = 0
-        el.preload = 'auto'
-        el.load() // begin buffering now, while the dark intro is on screen
-        musicRef.current = el
-      }
-    }
+    // Fetch the track during the intro so starting it after the flip only has
+    // to decode, not download.
+    fetchMusic()
 
-    // iOS interrupts audio contexts when the tab is hidden or the phone locks,
-    // and doesn't always bring them back on its own.
+    // iOS interrupts audio contexts when the tab is hidden, the phone locks or a
+    // call comes in, and doesn't reliably bring them back. Resuming needs a
+    // gesture there, so any tap after an interruption brings the music back —
+    // App's own unlock listeners are gone by then, once `ready` latched.
+    const wakeIfStarted = () => {
+      if (startedRef.current) wake()
+    }
     const onVisible = () => {
-      const ctx = graphRef.current?.ctx
-      if (document.visibilityState === 'visible' && ctx && ctx.state !== 'running') {
-        ctx.resume().catch(() => {
-          /* a later gesture will retry */
-        })
-      }
+      if (document.visibilityState === 'visible') wakeIfStarted()
     }
     document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('touchend', wakeIfStarted, { passive: true })
+    window.addEventListener('click', wakeIfStarted, { passive: true })
+    window.addEventListener('keydown', wakeIfStarted, { passive: true })
 
     return () => {
       document.removeEventListener('visibilitychange', onVisible)
-      window.clearInterval(fadeRef.current)
+      window.removeEventListener('touchend', wakeIfStarted)
+      window.removeEventListener('click', wakeIfStarted)
+      window.removeEventListener('keydown', wakeIfStarted)
       window.clearTimeout(unduckRef.current)
-      musicRef.current?.pause()
-      musicRef.current = null
-      graphRef.current?.ctx.close().catch(() => {})
-      graphRef.current = null
-      graphTriedRef.current = false
+      ctxRef.current?.close().catch(() => {})
+      ctxRef.current = null
+      gainRef.current = null
+      startedRef.current = false
     }
-  }, [])
+  }, [fetchMusic, wake])
 
   return { ready, unlock, playSfx, setVoicePlaying }
 }

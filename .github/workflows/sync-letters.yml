@@ -76,7 +76,8 @@ jobs:
       # something holding `contents: write`.
       #
       # ffmpeg is for voice notes, and never re-encodes one: it reads them to draw
-      # the waveform, and packs a WAV into FLAC, which is lossless.
+      # the waveform, and copies a WAV's samples across untouched to drop its
+      # metadata.
       - name: Install ImageMagick and ffmpeg
         run: |
           set -euo pipefail
