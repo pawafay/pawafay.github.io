@@ -294,14 +294,18 @@ function withoutId3(bytes) {
 }
 
 /**
- * A voice note, saved without ever lowering its quality:
+ * A voice note, saved without ever lowering its quality — the sound that plays
+ * is the sound that was recorded, sample for sample:
  *
- *   MP3              kept as is — only the ID3 tags come off (see withoutId3);
- *   16/24-bit WAV    becomes FLAC, which is lossless: it decodes back to exactly
- *                    the same samples, at roughly half the size, so it streams
- *                    on a phone instead of stalling;
- *   any other WAV    kept as is (32-bit or float PCM, which FLAC either can't
- *                    hold exactly or browsers can't play back).
+ *   MP3   kept as is — only the ID3 tags come off (see withoutId3);
+ *   WAV   kept as WAV, the samples copied across untouched (`-c:a copy`: no
+ *         decode, no encode). Only the metadata chunks are left behind — the
+ *         same privacy step as the MP3 tags.
+ *
+ * Not FLAC, though it would halve a WAV losslessly: GitHub Pages serves .flac
+ * as audio/x-flac, a type WebKit doesn't list among the ones it always plays,
+ * and an iPhone that wouldn't play the voice note is the one failure that
+ * matters most here. audio/wav and audio/mp3 are both on that list.
  */
 function saveVoice(bytes, number, intoDir, label) {
   const raw = join(intoDir, `raw-voice-${number}`)
@@ -314,8 +318,10 @@ function saveVoice(bytes, number, intoDir, label) {
   if (audio.codec === 'mp3') {
     file = `voice-${number}.mp3`
     writeFileSync(join(intoDir, file), withoutId3(bytes))
-  } else if (audio.format === 'wav' && /^pcm_s(16|24)le$/.test(audio.codec)) {
-    file = `voice-${number}.flac`
+  } else if (audio.format === 'wav') {
+    file = `voice-${number}.wav`
+    // bitexact: without it ffmpeg signs the file with its own version string,
+    // so re-syncing an unchanged letter would produce a different file.
     execFileSync('ffmpeg', [
       '-v',
       'error',
@@ -324,17 +330,16 @@ function saveVoice(bytes, number, intoDir, label) {
       raw,
       '-map',
       '0:a:0',
+      '-c:a',
+      'copy',
       '-map_metadata',
       '-1',
-      '-c:a',
-      'flac',
-      '-compression_level',
-      '8',
+      '-fflags',
+      '+bitexact',
+      '-flags:a',
+      '+bitexact',
       join(intoDir, file),
     ])
-  } else if (audio.format === 'wav') {
-    file = `voice-${number}.wav`
-    writeFileSync(join(intoDir, file), bytes)
   } else {
     fail(`${label} is ${audio.codec} audio — only .mp3 and .wav voice notes are supported`)
   }

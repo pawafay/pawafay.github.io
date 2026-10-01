@@ -28,9 +28,11 @@ The text is optional: a letter can be just a photo, or just a voice note.
   recorded:
   - an **.mp3** is kept exactly as it is. Only its ID3 tags (title, recorder
     app, that kind of metadata) are cut off; the audio itself is untouched.
-  - a **.wav** becomes **.flac**, which is lossless: it decodes back to exactly
-    the same audio, bit for bit, at about half the size. (A 32-bit or float WAV,
-    which FLAC can't hold exactly, is kept as a WAV instead.)
+  - a **.wav** is kept as a WAV, its audio copied across sample for sample.
+    Only its metadata is dropped, same as the MP3 tags.
+
+  (Not converted to FLAC, even though that's lossless and half the size:
+  GitHub Pages serves .flac with a type iPhones aren't guaranteed to play.)
 - The workflow also measures each voice note's **length and waveform**, so the
   player looks complete before anything is downloaded. Nothing is: a voice note
   only starts loading when play is pressed, and it streams, so even a long one
@@ -74,7 +76,7 @@ src/letters/
     index.md          ← the letter
     1.jpg             ← optional photos, max 10
     2.jpg
-    voice-1.mp3       ← optional voice notes (.mp3, .wav or .flac)
+    voice-1.mp3       ← optional voice notes (.mp3 or .wav)
     voice-1.json      ← optional: its length and waveform
 ```
 
@@ -122,7 +124,7 @@ it a `date` a day later, or write it as an issue instead.
 ### Photos and voice notes
 
 Drop the files into the letter's folder. Images are `.jpg`, `.jpeg`, `.png`,
-`.webp` and `.avif`; voice notes are `.mp3`, `.wav` and `.flac`.
+`.webp` and `.avif`; voice notes are `.mp3` and `.wav`.
 
 To put one at a particular spot in the letter, write an **embed line** there —
 `![](` + the filename + `)`:
