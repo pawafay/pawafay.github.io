@@ -239,14 +239,40 @@
   font-size: 1.12em;
 }
 
-/* ---- photos below the letter ---- */
+/* ---- photos and voice notes in the letter ----
+   Both sit inside a RuleSnap, which pads them out to a whole number of ruled
+   lines; the one blank line after each is what a paragraph gets too. */
+.rule-snap {
+  position: relative;
+}
+.rule-snap__probe {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  inline-size: 0;
+  block-size: var(--rule);
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.mail-letter__voice {
+  margin-block-end: var(--rule);
+}
+
 .mail-letter__photos {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   align-items: flex-start;
   gap: clamp(1rem, 4vw, 1.6rem);
-  margin-block-start: clamp(1.6rem, 6vw, 2.4rem);
+  margin-block-end: var(--rule);
+}
+
+/* ---- photos below the letter ---- */
+/* The photos the text never placed — and so every photo of a letter from before
+   they could sit inline. Laid out exactly as they always were. */
+.mail-letter__photos--trailing {
+  margin-block: clamp(1.6rem, 6vw, 2.4rem) 0;
   /* A torn edge above the photos: the letter ends, the scrapbook begins. */
   padding-block-start: clamp(1.2rem, 5vw, 1.8rem);
   border-block-start: 1.5px dashed rgba(110, 150, 180, 0.4);

@@ -12,6 +12,8 @@ interface MiniEnvelopeProps {
   read: boolean
   /** Position in the stack, used to stagger the reveal. */
   index: number
+  /** There's a voice note inside — the envelope wears a little mic stamp. */
+  hasVoice?: boolean
 }
 
 /**
@@ -23,8 +25,9 @@ interface MiniEnvelopeProps {
  * is a single 240px hero with a permanent breathing animation, which would read
  * as a nervous twitch repeated six times across a grid.
  */
-export function MiniEnvelope({ slug, date, title, read, index }: MiniEnvelopeProps) {
+export function MiniEnvelope({ slug, date, title, read, index, hasVoice }: MiniEnvelopeProps) {
   const rotation = seededRotation(slug, -2.6, 2.6)
+  const stampRotation = seededRotation(`${slug}-stamp`, -10, 4)
 
   return (
     <a
@@ -39,7 +42,21 @@ export function MiniEnvelope({ slug, date, title, read, index }: MiniEnvelopePro
         <span className="mini-envelope__seal">
           <WaxSeal broken={read} />
         </span>
+
+        {hasVoice && (
+          <span
+            className="mini-envelope__stamp"
+            style={{ '--stamp-rot': `${stampRotation}deg` } as CSSProperties}
+          >
+            <svg viewBox="0 0 24 24">
+              <rect x="9" y="3" width="6" height="11" rx="3" />
+              <path d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6" />
+            </svg>
+          </span>
+        )}
       </span>
+
+      {hasVoice && <span className="sr-only">has a voice note</span>}
 
       <span className="mini-envelope__postmark">
         <time className="mini-envelope__date" dateTime={date}>

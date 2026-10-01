@@ -1,12 +1,14 @@
 import { useRef } from 'react'
 import type { CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
-import type { LetterEntry } from '../../letters.types'
+import type { LetterEntry, LetterPhoto } from '../../letters.types'
 import type { TapeStyle } from '../../config.types'
 import { useDialogTrap } from '../../hooks/useDialogTrap'
 import { useReadingTracker } from '../../hooks/useReadingTracker'
 import { TapedPhoto } from '../photo/TapedPhoto'
 import { InlineText } from './InlineText'
+import { RuleSnap } from './RuleSnap'
+import { VoiceNote } from './VoiceNote'
 import './MailLetter.css'
 
 /** Cycled so a row of photos never looks like a spreadsheet. */
@@ -32,17 +34,41 @@ export function MailLetter({ letter, onClose }: MailLetterProps) {
 
   useDialogTrap(sheetRef, onClose, backRef)
 
-  const { date, title, paragraphs, photos } = letter
+  const { date, title, blocks, counts, slug } = letter
 
   useReadingTracker(scrollRef, {
     kind: 'mail',
-    slug: letter.slug,
+    slug,
     title,
-    paragraphCount: paragraphs.length,
-    photoCount: photos.length,
+    paragraphCount: counts.paragraphs,
+    photoCount: counts.photos,
+    voiceCount: counts.voices,
   })
 
-  const photosDelay = 0.52 + paragraphs.length * 0.14
+  // Numbered across the whole letter, not per group, so alt text and the tape
+  // pattern carry on from one row of photos to the next.
+  let photoNumber = 0
+  let voiceNumber = 0
+
+  const photoRow = (photos: LetterPhoto[], delay: number) =>
+    photos.map((photo, inRow) => {
+      const i = photoNumber++
+      return (
+        <div
+          key={photo.name}
+          className="mail-letter__photo"
+          style={{ animationDelay: `${delay + inRow * 0.12}s`, '--i': i } as CSSProperties}
+        >
+          <TapedPhoto
+            resolvedSrc={photo.url}
+            shape="polaroid"
+            tapeStyle={TAPES[i % TAPES.length]}
+            seed={`${slug}-${photo.name}`}
+            alt={title ? `${title} — photo ${i + 1}` : `Photo ${i + 1} from ${date}`}
+          />
+        </div>
+      )
+    })
 
   return createPortal(
     <div className="mail-letter-overlay">
@@ -79,37 +105,60 @@ export function MailLetter({ letter, onClose }: MailLetterProps) {
                 </h3>
               )}
 
-              {paragraphs.map((paragraph, i) => (
-                <p
-                  key={i}
-                  className="mail-letter__line"
-                  style={{ animationDelay: `${0.56 + i * 0.14}s` }}
-                >
-                  <InlineText text={paragraph} />
-                </p>
-              ))}
+              {blocks.map((block, i) => {
+                const delay = 0.56 + i * 0.14
+                // Keyed by letter as well, so going straight from one letter to
+                // another remounts a voice note instead of swapping its audio
+                // out from under it mid-play.
+                const key = `${slug}:${i}`
 
-              {photos.length > 0 && (
-                <div className={`mail-letter__photos mail-letter__photos--${photos.length}`}>
-                  {photos.map((photo, i) => (
-                    <div
-                      key={photo.name}
-                      className="mail-letter__photo"
-                      style={
-                        { animationDelay: `${photosDelay + i * 0.12}s`, '--i': i } as CSSProperties
-                      }
+                if (block.kind === 'text') {
+                  return (
+                    <p
+                      key={key}
+                      className="mail-letter__line"
+                      style={{ animationDelay: `${delay}s` }}
                     >
-                      <TapedPhoto
-                        resolvedSrc={photo.url}
-                        shape="polaroid"
-                        tapeStyle={TAPES[i % TAPES.length]}
-                        seed={`${letter.slug}-${photo.name}`}
-                        alt={title ? `${title} — photo ${i + 1}` : `Photo ${i + 1} from ${date}`}
-                      />
+                      <InlineText text={block.text} />
+                    </p>
+                  )
+                }
+
+                if (block.kind === 'voice') {
+                  voiceNumber += 1
+                  return (
+                    <RuleSnap
+                      key={`${key}:${block.voice.name}`}
+                      className="mail-letter__voice"
+                      style={{ animationDelay: `${delay}s` }}
+                    >
+                      <VoiceNote voice={block.voice} slug={slug} index={voiceNumber} />
+                    </RuleSnap>
+                  )
+                }
+
+                // Up to three across; any more wrap onto rows of their own.
+                const size = `mail-letter__photos--${Math.min(block.photos.length, 3)}`
+
+                // The photos nothing placed, after the letter as they always were.
+                // Nothing follows them, so they needn't land on the ruling.
+                if (block.trailing) {
+                  return (
+                    <div
+                      key={key}
+                      className={`mail-letter__photos mail-letter__photos--trailing ${size}`}
+                    >
+                      {photoRow(block.photos, delay)}
                     </div>
-                  ))}
-                </div>
-              )}
+                  )
+                }
+
+                return (
+                  <RuleSnap key={key} className={`mail-letter__photos ${size}`}>
+                    {photoRow(block.photos, delay)}
+                  </RuleSnap>
+                )
+              })}
             </div>
           </div>
         </div>

@@ -2,20 +2,25 @@
 //
 // ── Why these photos live under src/ and not public/ ────────────────────────
 // Every other asset in this project sits in public/ and is resolved at runtime
-// through asset() (see lib/paths.ts). Letter photos are the one exception, on
-// purpose: public/ is copied verbatim and is invisible to import.meta.glob, so a
-// folder in there can never be auto-detected. Keeping a letter's photos next to
-// its index.md lets Vite collect, hash and emit them, which is the whole reason
-// "drop the files in the folder and they show up" works. Their URLs come back
-// already resolved, so they must NOT be passed through asset() again.
+// through asset() (see lib/paths.ts). Letter photos and voice notes are the one
+// exception, on purpose: public/ is copied verbatim and is invisible to
+// import.meta.glob, so a folder in there can never be auto-detected. Keeping a
+// letter's files next to its index.md lets Vite collect, hash and emit them,
+// which is the whole reason "drop the files in the folder and they show up"
+// works. Their URLs come back already resolved, so they must NOT be passed
+// through asset() again.
+//
+// Importing them eagerly costs nothing at runtime: for a photo or a voice note
+// the import is just its URL string. The bytes are only fetched when an <img>
+// scrolls into view or a voice note's play button is pressed.
 //
 // Import this module from the mailbox components only. They live in the
 // lazy-loaded PartyScene chunk, so the letter text rides along there instead of
 // weighing down the initial bundle.
-import type { LetterEntry, LetterPhoto } from '../letters.types'
+import type { LetterBlock, LetterEntry, LetterPhoto, LetterVoice } from '../letters.types'
 
 /** Photos past this count are ignored, so a stray file can't blow up the layout. */
-const MAX_PHOTOS = 3
+const MAX_PHOTOS = 10
 
 const BODIES = import.meta.glob('../letters/*/index.md', {
   eager: true,
@@ -28,11 +33,30 @@ const PHOTOS = import.meta.glob('../letters/*/*.{jpg,jpeg,png,webp,avif}', {
   import: 'default',
 }) as Record<string, string>
 
+const VOICES = import.meta.glob('../letters/*/*.{mp3,wav,flac}', {
+  eager: true,
+  import: 'default',
+}) as Record<string, string>
+
+/** voice-1.json beside voice-1.mp3: its length and waveform, from sync-letter.mjs. */
+const WAVEFORMS = import.meta.glob('../letters/*/*.json', {
+  eager: true,
+  import: 'default',
+}) as Record<string, unknown>
+
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 const BODY_PATH = /^\.\.\/letters\/([^/]+)\/index\.md$/
-const PHOTO_PATH = /^\.\.\/letters\/([^/]+)\/([^/]+)$/
+const FILE_PATH = /^\.\.\/letters\/([^/]+)\/([^/]+)$/
 const FRONTMATTER = /^---[ \t]*\n([\s\S]*?)\n---[ \t]*(?:\n|$)/
 const META_LINE = /^([A-Za-z][\w-]*)[ \t]*:[ \t]*(.*)$/
+
+/**
+ * `![](voice-1.mp3)` — a file from this letter's own folder, placed right here.
+ * A bare filename only: anything with a slash or a scheme is a remote image, and
+ * those are stripped below like any other unsupported markup.
+ */
+const EMBED = /!\[[^\]\n]*\]\(\s*([\w.-]+)\s*\)/g
+const EMBED_ONLY = /^!\[[^\]\n]*\]\(\s*([\w.-]+)\s*\)$/
 
 /**
  * Markup the letter format doesn't support, removed rather than shown raw.
@@ -43,7 +67,7 @@ const META_LINE = /^([A-Za-z][\w-]*)[ \t]*:[ \t]*(.*)$/
  * a pasted image or stray tag from showing up as literal gibberish in the letter.
  */
 const STRIPPED = [
-  /!\[[^\]]*\]\([^)]*\)/g, // markdown images — photos come from the folder
+  /!\[[^\]]*\]\((?![\w.-]+\s*\))[^)]*\)/g, // remote markdown images — not embeds
   /<!--[\s\S]*?-->/g, // html comments
   /<\/?[a-zA-Z][^>]*>/g, // html tags
 ]
@@ -97,16 +121,44 @@ function splitFrontmatter(raw: string): { meta: Frontmatter; body: string } {
   return { meta, body: text.slice(block[0].length) }
 }
 
-function photosFor(slug: string): LetterPhoto[] {
-  const found: LetterPhoto[] = []
-  for (const path of Object.keys(PHOTOS)) {
-    const parts = PHOTO_PATH.exec(path)
-    if (!parts || parts[1] !== slug) continue
-    found.push({ url: PHOTOS[path], name: parts[2] })
+type FolderFile = { kind: 'photo' | 'voice'; url: string }
+
+/** slug → filename → file, for every photo and voice note in every letter folder. */
+const FOLDERS = new Map<string, Map<string, FolderFile>>()
+for (const [kind, files] of [
+  ['photo', PHOTOS],
+  ['voice', VOICES],
+] as const) {
+  for (const [path, url] of Object.entries(files)) {
+    const parts = FILE_PATH.exec(path)
+    if (!parts) continue
+    let folder = FOLDERS.get(parts[1])
+    if (!folder) FOLDERS.set(parts[1], (folder = new Map()))
+    folder.set(parts[2], { kind, url })
   }
-  // Numeric-aware so 2.jpg sorts before 10.jpg.
-  found.sort((a, b) => a.name.localeCompare(b.name, 'en', { numeric: true }))
-  return found.slice(0, MAX_PHOTOS)
+}
+
+/** Numeric-aware so 2.jpg sorts before 10.jpg. */
+const byName = (a: string, b: string) => a.localeCompare(b, 'en', { numeric: true })
+
+/**
+ * A voice note plus its waveform file, when it has a usable one. A hand-dropped
+ * file has none, and the card then draws decorative bars and asks the browser
+ * for the length instead — so a malformed .json is ignored, never fatal.
+ */
+function voiceOf(slug: string, name: string, url: string): LetterVoice {
+  const data = WAVEFORMS[`../letters/${slug}/${name.replace(/\.\w+$/, '')}.json`] as
+    { duration?: unknown; peaks?: unknown } | undefined
+  const voice: LetterVoice = { url, name }
+  if (typeof data?.duration === 'number' && data.duration > 0) voice.duration = data.duration
+  if (
+    Array.isArray(data?.peaks) &&
+    data.peaks.length > 0 &&
+    data.peaks.every((p) => typeof p === 'number' && Number.isFinite(p))
+  ) {
+    voice.peaks = (data.peaks as number[]).map((p) => Math.min(1, Math.max(0, p)))
+  }
+  return voice
 }
 
 /**
@@ -128,6 +180,84 @@ function reject(slug: string, problem: string): void {
   console.error(`[letters] ${message}`)
 }
 
+/** Like reject(), for a problem that loses one piece of a letter but not the letter. */
+function warn(slug: string, problem: string): void {
+  const message = `"${slug}": ${problem}`
+  letterProblems.push(message)
+  console.error(`[letters] ${message}`)
+}
+
+/**
+ * The letter as the page shows it: paragraphs, photos and voice notes in the
+ * order they were written.
+ *
+ * An embed line puts its file exactly there; consecutive photos share one row.
+ * Files nothing places come last — voice notes, then photos as the closing
+ * scrapbook group. Every letter written before files could sit inline places
+ * none of them, so it renders exactly as it always has.
+ */
+function blocksFor(slug: string, body: string): LetterBlock[] {
+  const files = FOLDERS.get(slug) ?? new Map<string, FolderFile>()
+  const placed = new Set<string>()
+  const blocks: LetterBlock[] = []
+  let photoCount = 0
+
+  const addPhoto = (photo: LetterPhoto) => {
+    if (photoCount >= MAX_PHOTOS) return
+    photoCount += 1
+    const last = blocks.at(-1)
+    if (last?.kind === 'photos' && !last.trailing) last.photos.push(photo)
+    else blocks.push({ kind: 'photos', photos: [photo], trailing: false })
+  }
+
+  // Trailing spaces ride along for free from an editor or a phone keyboard, and
+  // they matter now that a newline inside a paragraph is a real break (see
+  // InlineText): a line holding nothing but spaces isn't blank, so it would
+  // quietly stop a paragraph break from being one. Flatten them first. Then give
+  // every embed a paragraph of its own, wherever in a line it was typed.
+  const chunks = strip(body)
+    .replace(/[ \t]+$/gm, '')
+    .replace(EMBED, '\n\n$&\n\n')
+    .split(/\n{2,}/)
+
+  for (const chunk of chunks) {
+    const text = chunk.trim()
+    if (!text) continue
+
+    const embed = EMBED_ONLY.exec(text)
+    if (!embed) {
+      blocks.push({ kind: 'text', text })
+      continue
+    }
+
+    const name = embed[1]
+    const file = files.get(name)
+    if (!file) {
+      warn(slug, `index.md places "${name}", but there is no such photo or voice note beside it.`)
+      continue
+    }
+    placed.add(name)
+    if (file.kind === 'voice') blocks.push({ kind: 'voice', voice: voiceOf(slug, name, file.url) })
+    else addPhoto({ url: file.url, name })
+  }
+
+  const rest = [...files.keys()].filter((name) => !placed.has(name)).sort(byName)
+  for (const name of rest) {
+    const file = files.get(name)!
+    if (file.kind === 'voice') blocks.push({ kind: 'voice', voice: voiceOf(slug, name, file.url) })
+  }
+  const trailing: LetterPhoto[] = []
+  for (const name of rest) {
+    const file = files.get(name)!
+    if (file.kind !== 'photo' || photoCount >= MAX_PHOTOS) continue
+    photoCount += 1
+    trailing.push({ url: file.url, name })
+  }
+  if (trailing.length > 0) blocks.push({ kind: 'photos', photos: trailing, trailing: true })
+
+  return blocks
+}
+
 function build(): LetterEntry[] {
   const entries: LetterEntry[] = []
 
@@ -147,29 +277,22 @@ function build(): LetterEntry[] {
       continue
     }
 
-    // Trailing spaces ride along for free from an editor or a phone keyboard,
-    // and they matter now that a newline inside a paragraph is a real break (see
-    // InlineText): a line holding nothing but spaces isn't blank, so it would
-    // quietly stop a paragraph break from being one. Flatten them first.
-    const paragraphs = strip(body)
-      .replace(/[ \t]+$/gm, '')
-      .split(/\n{2,}/)
-      .map((p) => p.trim())
-      .filter(Boolean)
-
-    if (paragraphs.length === 0) {
-      reject(slug, 'index.md has no body text below the frontmatter.')
+    // A letter can be nothing but a photo or a voice note — but it has to be
+    // something.
+    const blocks = blocksFor(slug, body)
+    if (blocks.length === 0) {
+      reject(slug, 'index.md has nothing below the frontmatter, and there are no files beside it.')
       continue
     }
 
-    entries.push({
-      slug,
-      date,
-      title: meta.title,
-      issue: meta.issue,
-      paragraphs,
-      photos: photosFor(slug),
-    })
+    const counts = { paragraphs: 0, photos: 0, voices: 0 }
+    for (const block of blocks) {
+      if (block.kind === 'text') counts.paragraphs += 1
+      else if (block.kind === 'photos') counts.photos += block.photos.length
+      else counts.voices += 1
+    }
+
+    entries.push({ slug, date, title: meta.title, issue: meta.issue, blocks, counts })
   }
 
   // Newest first — and "newest" has to survive several letters sharing a day,

@@ -21,6 +21,8 @@ export interface ReadingSubject {
   title?: string
   paragraphCount: number
   photoCount: number
+  /** Mailbox letters only — the closing letter can't hold a voice note. */
+  voiceCount?: number
 }
 
 /**
@@ -40,7 +42,7 @@ export function useReadingTracker(
   scrollRef: RefObject<HTMLElement | null>,
   subject: ReadingSubject,
 ): void {
-  const { kind, slug, title, paragraphCount, photoCount } = subject
+  const { kind, slug, title, paragraphCount, photoCount, voiceCount } = subject
 
   useEffect(() => {
     const openedAt = Date.now()
@@ -127,6 +129,7 @@ export function useReadingTracker(
       letter_kind: kind,
       paragraph_count: paragraphCount,
       photo_count: photoCount,
+      voice_count: voiceCount,
     })
 
     const settle = window.setTimeout(measure, SETTLE_MS)
@@ -142,5 +145,5 @@ export function useReadingTracker(
       window.removeEventListener('pagehide', onPageHide)
       finish('close')
     }
-  }, [scrollRef, kind, slug, title, paragraphCount, photoCount])
+  }, [scrollRef, kind, slug, title, paragraphCount, photoCount, voiceCount])
 }

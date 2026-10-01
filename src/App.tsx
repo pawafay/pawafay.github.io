@@ -48,15 +48,18 @@ function StoryExperience() {
   // dropped someone straight into the party. Fall back to the first gesture
   // anywhere, which is the least a browser will accept. unlock() is a no-op once
   // the track is playing, and it deliberately leaves `ready` false when play()
-  // is rejected, so a browser that won't count pointerdown gets another go.
+  // is rejected, so a browser that won't count pointerdown gets another go —
+  // and `click` is in the list for iOS, which never counts pointerdown at all.
   const { ready: audioReady, unlock: unlockAudio } = audio
   useEffect(() => {
     if (!showParty || audioReady) return
     const tryUnlock = () => unlockAudio()
     window.addEventListener('pointerdown', tryUnlock)
+    window.addEventListener('click', tryUnlock)
     window.addEventListener('keydown', tryUnlock)
     return () => {
       window.removeEventListener('pointerdown', tryUnlock)
+      window.removeEventListener('click', tryUnlock)
       window.removeEventListener('keydown', tryUnlock)
     }
   }, [showParty, audioReady, unlockAudio])

@@ -81,6 +81,43 @@
   z-index: 3;
 }
 
+/* ---- the mic stamp: there's a voice note inside ----
+   A tiny postage stamp in the bottom-left corner — perforated edge, rose face,
+   a mic printed in cream. Kept on read letters too: it says what is inside,
+   not whether it has been opened. */
+.mini-envelope__stamp {
+  position: absolute;
+  left: 6cqi;
+  bottom: 7cqi;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 17cqi;
+  aspect-ratio: 5 / 6;
+  rotate: var(--stamp-rot, -6deg);
+  /* The perforation: the cream border bitten by a ring of round holes. */
+  padding: 1.6cqi;
+  background: radial-gradient(circle, transparent 0 0.9cqi, #fff7e6 1cqi) -1.25cqi -1.25cqi / 2.5cqi
+    2.5cqi;
+  filter: drop-shadow(0 1px 1.5px rgba(60, 35, 15, 0.35));
+}
+.mini-envelope__stamp svg {
+  width: 100%;
+  height: 100%;
+  padding: 18%;
+  border-radius: 1px;
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.28), transparent 60%), var(--rose);
+  fill: none;
+  stroke: #fff7e6;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.mini-envelope__stamp rect {
+  fill: #fff7e6;
+}
+
 /* ---- airmail edge: only unread mail wears the stripes ---- */
 .mini-envelope.is-unread .mini-envelope__paper::before {
   content: '';

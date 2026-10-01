@@ -74,11 +74,14 @@ jobs:
       # than pinning ubuntu-22.04, which is on its way out, and rather than adding
       # an npm image library, which would put a native dependency in the path of
       # something holding `contents: write`.
-      - name: Install ImageMagick
+      #
+      # ffmpeg is for voice notes, and never re-encodes one: it reads them to draw
+      # the waveform, and packs a WAV into FLAC, which is lossless.
+      - name: Install ImageMagick and ffmpeg
         run: |
           set -euo pipefail
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends imagemagick
+          sudo apt-get install -y --no-install-recommends imagemagick ffmpeg
 
       - name: Build the letter
         id: build
@@ -135,16 +138,18 @@ jobs:
           LETTER_SLUG: ${{ steps.build.outputs.letter_slug }}
           PHOTO_COUNT: ${{ steps.build.outputs.photo_count }}
           PHOTOS_FOUND: ${{ steps.build.outputs.photos_found }}
+          VOICE_COUNT: ${{ steps.build.outputs.voice_count }}
         run: |
           set -euo pipefail
           kept="${PHOTO_COUNT:-0}"
           found="${PHOTOS_FOUND:-0}"
+          voices="${VOICE_COUNT:-0}"
           note=''
           if [ "$found" -gt "$kept" ]; then
-            note=" — ${found} were found, only the first ${kept} are shown"
+            note=" (${found} were found, only the first ${kept} are shown)"
           fi
           body="Published: https://pawafay.github.io/#/mail/${LETTER_SLUG}"
-          body="${body}"$'\n\n'"${kept} photo(s)${note}. Give the deploy about a minute."
+          body="${body}"$'\n\n'"${kept} photo(s)${note}, ${voices} voice note(s). Give the deploy about a minute."
           # A missing label must not fail a run that already committed fine.
           gh label create published --color C9A24B --description 'live on the site' || true
           gh issue edit "$ISSUE_NUMBER" --add-label published || true

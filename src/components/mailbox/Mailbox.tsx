@@ -104,6 +104,7 @@ export function Mailbox() {
             title={letter.title}
             read={Boolean(read[letter.slug])}
             index={i}
+            hasVoice={letter.counts.voices > 0}
           />
         ))}
       </div>
