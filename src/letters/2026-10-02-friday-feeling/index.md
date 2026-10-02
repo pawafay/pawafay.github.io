@@ -30,7 +30,7 @@ That's why I reduced to reach out first. But I make sure I reply to your chats a
 Then a few days ago, we had a call in the evening. You talked seriously about "us." You said you were pretty sure our relationship would end 🙁 You said we would never meet, and other things like that.
 That made me feel really hopeless. And somehow I lost my confidence, because I felt like I didn't deserve you 🥲, I'm scared if I'm failed and can't make you happy ☹️
 
-Also, lately I've been feeling like you're looking for someone to replace me. You talk about Malaysia a lot. Did you find someone new there 🙃. And that's why i guve you a space to enjoy without bothering you
+Also, lately I've been feeling like you're looking for someone to replace me. You talk about Malaysia a lot. Did you find someone new there 🙃. And that's why i give you some space to enjoy without bothering you, maybe you'll have some better moments without me
 
 So yupp, in summary, I always want to stay with you, text you and call you. I wanna hear your happy stories and your bad stories. I wanna cheer you up when you're sad. I wanna wipe away your tears when you're crying. I wanna see **your smile** 😊
 
@@ -38,4 +38,4 @@ But if you decide to step away, or maybe you're trying to find someone else, or 
 
 Lastly, the reason I'm not sending this to you directly is that I don't have the confidence to text you first right now, and this mailbox is the only place where I can share my feelings. Here, you can choose whether to read it or not. If I messaged you directly, it would feel like I was forcing you to read this long text.
 
-Goodnight pawaaa
+Goodnight Pawaa 🌻
