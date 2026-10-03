@@ -28,7 +28,7 @@ Then when you said, "Why don't you chat or call me? Today I'm the one who starte
 That's why I reduced to reach out first. But I make sure I reply to your chats and calls right away whenever I see your notification, and I've been doing that. Even recently I didn't "lock in" anymore, right?
 
 Then a few days ago, we had a call in the evening. You talked seriously about "us." You said you were pretty sure our relationship would end 🙁 You said we would never meet, and other things like that.
-That made me feel really hopeless. And somehow I lost my confidence, because I felt like I didn't deserve you 🥲, I'm scared if I'm failed and can't make you happy ☹️
+That made me feel really hopeless. And somehow I lost my confidence, because **I felt like I didn't deserve you** 🥲, I'm scared if I'm failed and can't make you happy ☹️
 
 Also, lately I've been feeling like you're looking for someone to replace me. You talk about Malaysia a lot. Did you find someone new there 🙃. And that's why i give you some space to enjoy without bothering you, maybe you'll have some better moments without me
 
