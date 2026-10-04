@@ -32,9 +32,11 @@ That made me feel really hopeless. And somehow I lost my confidence, because **I
 
 Also, lately I've been feeling like you're looking for someone to replace me. You talk about Malaysia a lot. Did you find someone new there 🙃. And that's why i give you some space to enjoy without bothering you, maybe you'll have some better moments without me
 
-So yupp, in summary, I always want to stay with you, text you and call you. I wanna hear your happy stories and your bad stories. I wanna cheer you up when you're sad. I wanna wipe away your tears when you're crying. I wanna see **your smile** 😊
+So yupp, in summary, I always want to stay with you, text you and call you. I wanna hear your happy stories and your bad stories. I wanna cheer you up when you're sad. I wanna wipe away your tears when you're crying. I wanna see **your smile** 😊.
 
-But if you decide to step away, or maybe you're trying to find someone else, or you're already tired of me, then i will let you go, because you deserve better ☀️
+**I love you with all my heart**. I'll make time for you even on my busiest days, and I'll draw you a flower anytime you want. I'm doing my best, but I honestly don't know when I'll be able to meet you. I want so badly to **be by your side and hold your hand**. I just don't know when that day will come. And from the way you act, I can feel that you're not willing to wait for me, and that feeling has been haunting me all this time.
+
+So if you decide to step away, or maybe you're trying to find someone else, or you're already tired of me, then i will let you go, because you deserve better ☀️
 
 Lastly, the reason I'm not sending this to you directly is that I don't have the confidence to text you first right now, and this mailbox is the only place where I can share my feelings. Here, you can choose whether to read it or not. If I messaged you directly, it would feel like I was forcing you to read this long text.
 
