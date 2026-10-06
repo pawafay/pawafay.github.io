@@ -12,9 +12,9 @@ Nothing important here, i just done my lunch. And suddenly I'm thinking about yo
 
 Sooo, what are you doing now, have you eaten?, how about the flood?, how about the test?. I hope everything goes well.
 
-It's so hard, my soul really want to chat you, but my mind always reminds me that all of these just **one side feeling** so i have to accept it 😞
+I really want to chat you, but my mind always reminds me that all of these just **one side feeling** 😞
 
-It's kind a stupid, I'm sure you won't read my mailbox anymore, but again i still write this letter.  Because i feel better whenever i write this letter.🌷
+And the only thing i can do now just write this letter to make me feel better
 
 I wish everything is fine on your side, i hope you've eaten well, have enough sleep, and your school goes really well ♥️
 
