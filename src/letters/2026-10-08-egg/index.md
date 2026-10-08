@@ -1,5 +1,5 @@
 ---
-title: Carrot 🥕
+title: Egg 🥚
 date: 2026-10-08
 issue: 42
 ---
