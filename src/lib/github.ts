@@ -131,6 +131,44 @@ function issueBody(drawing: DrawingData, format: string, data: string): string {
   ].join('\n')
 }
 
+let labelReady = false
+
+/**
+ * Makes sure the label exists before an issue asks for it. GitHub doesn't
+ * document whether a missing label is created on the fly or the issue refused,
+ * so it is made here instead — the first time any device sends a page, which
+ * also leaves one less setup step to remember. Checked once per visit.
+ */
+async function ensureLabel(
+  token: string,
+  repo: { owner: string; name: string },
+): Promise<SendFailure | null> {
+  if (labelReady) return null
+  const labels = `/repos/${repo.owner}/${repo.name}/labels`
+  const found = await call(token, `${labels}/${SKETCH_LABEL}`)
+  if (!found) return { kind: 'offline' }
+  if (found.status === 401) return { kind: 'bad-key' }
+  if (found.status === 404) {
+    const made = await call(token, labels, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: SKETCH_LABEL,
+        color: 'f2c14e',
+        description: 'a page from the sketchbook',
+      }),
+    })
+    if (!made) return { kind: 'offline' }
+    if (made.status === 403 || made.status === 404) return { kind: 'no-access' }
+    // 422 means it exists after all — made a moment ago from another device.
+    if (!made.ok && made.status !== 422) return { kind: 'other', status: made.status }
+  } else if (!found.ok) {
+    return { kind: 'other', status: found.status }
+  }
+  labelReady = true
+  return null
+}
+
 /**
  * Sends a finished page. Resolves with the new issue's number and when it was
  * opened (the workflow dates the drawing by that), or with why it didn't go.
@@ -143,6 +181,9 @@ export async function sendDrawing(
 
   const { format, data } = await pack(drawing)
   if (data.length > MAX_PAYLOAD) return { kind: 'too-big' }
+
+  const labelTrouble = await ensureLabel(token, sketchRepo)
+  if (labelTrouble) return labelTrouble
 
   const title = drawing.caption
     ? `🖍️ ${drawing.caption} — by ${drawing.by || 'someone'}`
@@ -161,7 +202,11 @@ export async function sendDrawing(
   if (!response) return { kind: 'offline' }
   if (response.status === 401) return { kind: 'bad-key' }
   if (response.status === 403 || response.status === 404) return { kind: 'no-access' }
-  if (response.status === 422) return { kind: 'too-big' }
+  if (response.status === 422) {
+    // GitHub's own "body is too long" — any other 422 is something else.
+    const detail = await response.text().catch(() => '')
+    return /too long/i.test(detail) ? { kind: 'too-big' } : { kind: 'other', status: 422 }
+  }
   if (!response.ok) return { kind: 'other', status: response.status }
 
   const issue = (await response.json().catch(() => ({}))) as {

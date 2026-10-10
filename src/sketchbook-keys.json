@@ -1,0 +1,16 @@
+{
+  "v": 1,
+  "locks": [
+    {
+      "name": "Pawa",
+      "questions": [
+        "Your dog’s name",
+        "Your Roblox name"
+      ],
+      "iterations": 600000,
+      "salt": "yCxiTMsGYDP1FlcpAH9XPQ==",
+      "iv": "ZgrioZmf/8NfX6Qj",
+      "data": "/tfjDztfuluTe9BaiRXHIiAB/N8PzvZUhItwvF6fZmaScSo1nL0TmpWpeX0QyksycuFcdzkpe7OmIFcXbeebdSLZjiR0k+tZlVraB/TW5IqBQvbw8ind7RuXvWhPjYx1aGMKLip91tDM38fKNg=="
+    }
+  ]
+}

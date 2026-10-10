@@ -714,7 +714,8 @@
   display: grid;
   gap: 0.15rem;
 }
-.sketch-sheet__field span {
+.sketch-sheet__field > span,
+.sketch-sheet__field > label {
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 0.7rem;
@@ -740,6 +741,11 @@
 }
 .sketch-sheet__field input::placeholder {
   color: rgba(106, 83, 65, 0.45);
+}
+
+/* Answers <-> GitHub key: a quiet aside under the fields. */
+.sketch-sheet__switch {
+  margin-top: -0.4rem;
 }
 
 .sketch-sheet__signed {

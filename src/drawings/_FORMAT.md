@@ -7,33 +7,81 @@ Anyone can look. Only a device holding a **key** can draw and send a page.
 
 ---
 
-## Giving someone a key (you, or a friend you trust)
+## Keys
 
-Do this once per person, on the **pawafay** account. One key each, so you can
-cancel one without touching the other.
+Two GitHub keys, both made on the **pawafay** account: one for you, one for
+Pawa. One each, so either can be cancelled without touching the other.
 
-0. **The first time only:** make the label. Repo → Issues → Labels → New label,
-   name it **`gambar`**. (Sent pages arrive as issues with this label; without
-   it, nothing gets published, and the site will say so.)
-1. Open https://github.com/settings/personal-access-tokens/new
-2. **Token name:** `sketchbook — <their name>`. **Expiration:** whatever you like.
-   When it runs out, the site tells them the key stopped working.
-3. **Resource owner:** `pawafay`.
-4. **Repository access:** _Only select repositories_ → `pawafay/pawafay.github.io`.
-5. **Permissions → Repository permissions → Issues: _Read and write_.**
-   Nothing else. (_Metadata: Read-only_ is added by itself; leave it.)
-6. **Generate token** and copy it. It starts with `github_pat_`, and GitHub only
-   shows it once.
-7. Send it to them privately. They open the sketchbook, tap **"have a key?
-   unlock drawing on this device"**, paste it, and type the name their pages
-   should be signed with.
+The `gambar` label the pages arrive with makes itself, the first time a key is
+checked or a page is sent. Nothing to set up there.
 
-That device can draw from then on. The key stays in that browser only and is
-only ever sent to GitHub. **"Forget the key"** at the bottom of the sketchbook
-removes it from the device.
+### Making a key
+
+These links open GitHub's form already filled in: name, owner `pawafay`,
+365 days, and **Issues: Read and write**. Change the expiry if you like; when it
+runs out, the site says the key stopped working.
+
+- [Your key](https://github.com/settings/personal-access-tokens/new?name=sketchbook-mine&description=Draw+in+the+sketchbook+on+pawafay.github.io&target_name=pawafay&expires_in=365&issues=write)
+- [Pawa's key](https://github.com/settings/personal-access-tokens/new?name=sketchbook-pawa&description=Pawa%27s+sketchbook+key%2C+locked+behind+her+questions&target_name=pawafay&expires_in=365&issues=write)
+
+**The one thing a link can't fill in:** under **Repository access**, choose
+_Only select repositories_ → `pawafay/pawafay.github.io`. Then **Generate
+token** and copy it. It starts with `github_pat_`, and GitHub only shows it
+once.
+
+(By hand instead: https://github.com/settings/personal-access-tokens/new →
+resource owner `pawafay` → only `pawafay/pawafay.github.io` → Repository
+permissions → Issues: Read and write. Nothing else; _Metadata: Read-only_ adds
+itself.)
+
+### Yours: paste it as it is
+
+Open the sketchbook, tap **"have a key? unlock drawing on this device"**, then
+**"have a GitHub key instead?"**, and paste it. Your pages are signed with
+`sketchbookOwnerName` in [`src/config.ts`](../config.ts), which is
+`someone 😼`, the same as your letter. Change it there if you like.
+
+### Pawa's: locked behind her questions
+
+She never sees the GitHub key. The site asks her the questions, and her
+answers unlock the key behind them, signed **Pawa**.
+
+1. Make her key (above) and copy it.
+2. In the repo folder, from **PowerShell or Windows Terminal** (Git Bash's
+   own window can't hide what you type), run:
+   ```
+   bun run lock-key
+   ```
+   It asks for the name (`Pawa`), the key, then each question as the site
+   should word it, with its answer twice. The key and answers are not shown on
+   screen. It checks the key with GitHub, including that it can post here, and
+   saves nothing if anything is off.
+3. Commit and push **`src/sketchbook-keys.json`**. Once the site has deployed,
+   the questions appear in the sketchbook's unlock box.
+
+**How answers are matched:** capitals, spaces and `@` are ignored, so `Rex`,
+`rex ` and `@rex` are all the same answer. Everything else must match.
+
+New key, or new questions? Run `bun run lock-key` again with the same name. It
+replaces her old lock.
+
+**How safe are the answers?** The locked key ships inside the public site,
+questions and all, so anyone can download it and try answers on their own
+computer, as fast as they like, with no lockout. A pet's name or a game
+username keeps out strangers, but not someone who knows her or looks her up:
+usernames are public, and common pet names are the first thing anyone would
+try. That's the trade for not having to remember anything. The key's expiry
+and the delete button below are the backstop.
+
+### Either key
+
+The device can draw from then on. The unlocked key stays in that browser only
+and is only ever sent to GitHub. **"Forget the key"** at the bottom of the
+sketchbook removes it from the device.
 
 **Cancelling a key:** https://github.com/settings/personal-access-tokens → the
-token → Delete. Their next send fails with "that key doesn't work any more".
+token → Delete. The device's next send fails with "that key doesn't work any
+more". For Pawa's, make a new one and run `bun run lock-key` again.
 
 ### What a key can and can't do
 

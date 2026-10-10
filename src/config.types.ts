@@ -81,6 +81,12 @@ export interface StoryConfig {
    * it are, and those never go in here (see src/drawings/_FORMAT.md).
    */
   sketchbookRepo?: string
+  /**
+   * The name on pages drawn with the owner's own GitHub key, pasted as it is.
+   * Keys behind a secret phrase carry their own name instead (see
+   * scripts/lock-sketchbook-key.mjs). Defaults to the repo owner's login.
+   */
+  sketchbookOwnerName?: string
   /** Hero photo path under /public; omit → drawn placeholder. */
   heroPhoto?: string
   stickers: StickerConfig[]

@@ -34,6 +34,9 @@ export const config: StoryConfig = {
   //   everyone. Drawing needs a key — see src/drawings/_FORMAT.md. Leave empty
   //   and the sketchbook disappears from the party entirely. —
   sketchbookRepo: 'pawafay/pawafay.github.io',
+  // ↓ How pages are signed when drawn with your own GitHub key, pasted as it
+  //   is. Pawa's pages are signed with the name locked in with her phrase. —
+  sketchbookOwnerName: 'someone 😼',
 
   // — Hero photo (centre stage). Omit `heroPhoto` to use the placeholder.
   heroPhoto: 'images/main_photo.jpg',
