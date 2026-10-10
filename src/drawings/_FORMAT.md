@@ -36,8 +36,10 @@ itself.)
 
 ### Yours: paste it as it is
 
-Open the sketchbook, tap **"have a key? unlock drawing on this device"**, then
-**"have a GitHub key instead?"**, and paste it. Your pages are signed with
+Open the sketchbook, tap **"have a key? unlock drawing on this device"**, and
+paste it into the **first box** (the one asking for a dog's name). Leave the
+rest empty. A GitHub key in any box is taken as the key itself, and the box
+never says it accepts one. Your pages are signed with
 `sketchbookOwnerName` in [`src/config.ts`](../config.ts), which is
 `someone 😼`, the same as your letter. Change it there if you like.
 

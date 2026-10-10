@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import type { FormEvent, ReactNode, RefObject } from 'react'
 import type { DrawingData, DrawingStroke } from '../../drawings.types'
 import { config } from '../../config'
@@ -83,48 +83,39 @@ const OWNER_NAME =
 /**
  * Unlocking this device — the only thing that lets it send drawings.
  *
- * Two ways in, and nobody types a name in either. Answering the questions opens
- * a key locked in src/sketchbook-keys.json, and the lock carries the name its
- * pages are signed with. Or a GitHub key pasted as it is — the owner's own —
- * which signs pages with OWNER_NAME.
+ * It asks the lock's questions; the answers open a key locked in
+ * src/sketchbook-keys.json, and the lock carries the name its pages are signed
+ * with. The owner's way in is the same box: a GitHub key typed into it as it
+ * is — the first box, usually — opens nothing, it *is* the key, and signs pages
+ * with OWNER_NAME. Either way nobody types a name, and the sheet never says
+ * that a key is accepted there.
+ *
+ * With no lock saved at all, it simply asks for a GitHub key.
  */
 export function KeySheet({ onDone, onCancel }: KeySheetProps) {
-  const [mode, setMode] = useState<'answers' | 'key'>(lockQuestions ? 'answers' : 'key')
-  const [answers, setAnswers] = useState<string[]>(() => (lockQuestions ?? []).map(() => ''))
-  const [key, setKey] = useState('')
+  const questions = lockQuestions ?? ['GitHub key']
+  const [answers, setAnswers] = useState<string[]>(() => questions.map(() => ''))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const firstRef = useRef<HTMLInputElement>(null)
-  const switched = useRef(false)
   const fieldId = useId()
-
-  // Swapping between the two puts the cursor in the first box of the new one.
-  // (On open, the sheet's focus trap does that.)
-  useEffect(() => {
-    if (switched.current) firstRef.current?.focus()
-  }, [mode])
-
-  const switchTo = (next: 'answers' | 'key') => {
-    switched.current = true
-    setError(null)
-    setMode(next)
-  }
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     setError(null)
-    setBusy(true)
 
     let opened: { token: string; name: string } | null
-    if (mode === 'key') {
-      const token = key.trim()
-      opened = looksLikeGithubKey(token) ? { token, name: OWNER_NAME } : null
-      if (!opened) {
-        setBusy(false)
-        setError('That isn’t a GitHub key. It starts with github_pat_.')
-        return
-      }
+    const pasted = answers.map((answer) => answer.trim()).find(looksLikeGithubKey)
+    if (pasted) {
+      opened = { token: pasted, name: OWNER_NAME }
+    } else if (!lockQuestions) {
+      setError('That isn’t a GitHub key. It starts with github_pat_.')
+      return
+    } else if (answers.some((answer) => !answer.trim())) {
+      setError('Fill in every box first.')
+      return
     } else {
+      setBusy(true)
       opened = await openWithAnswers(answers)
       if (!opened) {
         setBusy(false)
@@ -134,12 +125,13 @@ export function KeySheet({ onDone, onCancel }: KeySheetProps) {
       }
     }
 
+    setBusy(true)
     const result = await checkKey(opened.token)
     setBusy(false)
     if ('ok' in result) {
       keyStore.set(opened)
       onDone()
-    } else if (mode === 'answers' && result.kind === 'bad-key') {
+    } else if (!pasted && result.kind === 'bad-key') {
       setError(
         'Those are the right answers, but the key behind them has expired or been cancelled.',
       )
@@ -148,68 +140,35 @@ export function KeySheet({ onDone, onCancel }: KeySheetProps) {
     }
   }
 
-  const inputProps = {
-    autoComplete: 'off',
-    autoCapitalize: 'none',
-    autoCorrect: 'off',
-    spellCheck: false,
-    required: true,
-  } as const
-
   return (
     <Sheet title="unlock drawing" onCancel={onCancel} initialFocusRef={firstRef}>
       <p className="sketch-sheet__lede">
-        {mode === 'answers'
+        {lockQuestions
           ? 'Answer these to unlock drawing on this device. You won’t be asked again here.'
           : 'Paste a GitHub key for this sketchbook. It stays on this device.'}
       </p>
       <form className="sketch-sheet__form" onSubmit={submit}>
-        {mode === 'answers' && lockQuestions ? (
-          lockQuestions.map((question, i, all) => (
-            <div className="sketch-sheet__field" key={question}>
-              <label htmlFor={`${fieldId}-${i}`}>{question}</label>
-              <input
-                id={`${fieldId}-${i}`}
-                ref={i === 0 ? firstRef : undefined}
-                type="text"
-                value={answers[i]}
-                onChange={(e) => {
-                  const next = [...answers]
-                  next[i] = e.target.value
-                  setAnswers(next)
-                }}
-                enterKeyHint={i === all.length - 1 ? 'go' : 'next'}
-                {...inputProps}
-              />
-            </div>
-          ))
-        ) : (
-          <div className="sketch-sheet__field">
-            <label htmlFor={fieldId}>GitHub key</label>
+        {questions.map((question, i, all) => (
+          <div className="sketch-sheet__field" key={question}>
+            <label htmlFor={`${fieldId}-${i}`}>{question}</label>
             <input
-              id={fieldId}
-              ref={firstRef}
-              type="password"
-              value={key}
-              onChange={(e) => setKey(e.target.value)}
-              placeholder="github_pat_…"
-              enterKeyHint="go"
-              {...inputProps}
+              id={`${fieldId}-${i}`}
+              ref={i === 0 ? firstRef : undefined}
+              type={lockQuestions ? 'text' : 'password'}
+              value={answers[i]}
+              onChange={(e) => {
+                const next = [...answers]
+                next[i] = e.target.value
+                setAnswers(next)
+              }}
+              autoComplete="off"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              enterKeyHint={i === all.length - 1 ? 'go' : 'next'}
             />
           </div>
-        )}
-
-        {lockQuestions && (
-          <p className="sketch-sheet__switch">
-            <button
-              type="button"
-              className="sketch-sheet__link"
-              onClick={() => switchTo(mode === 'answers' ? 'key' : 'answers')}
-            >
-              {mode === 'answers' ? 'have a GitHub key instead?' : 'answer the questions instead'}
-            </button>
-          </p>
-        )}
+        ))}
 
         {error && (
           <p className="sketch-sheet__error" role="alert">

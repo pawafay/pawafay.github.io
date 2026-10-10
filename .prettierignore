@@ -20,3 +20,7 @@ src/letters
 # Drawings are written by the drawing-sync workflow, one stroke per line on
 # purpose (see .github/scripts/sync-drawing.mjs) — never reflowed.
 src/drawings
+
+# Written by `bun run lock-key` (scripts/lock-sketchbook-key.mjs), in its own
+# layout — rewritten whole each time, so never hand-formatted.
+src/sketchbook-keys.json

@@ -743,11 +743,6 @@
   color: rgba(106, 83, 65, 0.45);
 }
 
-/* Answers <-> GitHub key: a quiet aside under the fields. */
-.sketch-sheet__switch {
-  margin-top: -0.4rem;
-}
-
 .sketch-sheet__signed {
   text-align: right;
   font-family: var(--font-hand);
