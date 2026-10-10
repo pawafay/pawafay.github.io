@@ -18,6 +18,7 @@
     "@fontsource/newsreader": "^5.2.10",
     "canvas-confetti": "^1.9.4",
     "motion": "^12.42.0",
+    "perfect-freehand": "1.2.3",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },

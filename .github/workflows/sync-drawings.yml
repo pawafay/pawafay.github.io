@@ -1,0 +1,203 @@
+name: Sync drawings from issues
+
+# The sketchbook on the site (#/sketchbook) sends each finished page as an issue
+# labelled `gambar`, opened with a key made on the owner's account. This turns it
+# into a file under src/drawings/ and publishes it. Take the `gambar` label off
+# and the drawing comes back down; put it back and it returns. Same shape as
+# sync-letters.yml — see src/drawings/_FORMAT.md.
+
+# No `opened`, for the reason spelled out in sync-letters.yml: an issue created
+# with its label already on fires `labeled` as well, and that alone is enough.
+on:
+  issues:
+    types: [edited, labeled, unlabeled]
+
+permissions: {}
+
+# Its own group, so a drawing never waits behind a letter. The two can still both
+# push to main within seconds of each other, which is why every push below (and
+# in sync-letters.yml) retries on top of whatever landed first.
+concurrency:
+  group: sync-drawings
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    # ── THE SECURITY GATE ───────────────────────────────────────────────────────
+    # Identical to the one in sync-letters.yml, and for the same reasons — read
+    # the comment there before changing anything here. The keys handed out for
+    # the sketchbook are made on the owner's account, so a drawing from either of
+    # you arrives as the owner's issue and passes; anything else does not.
+    if: >-
+      github.event.issue.user.login == github.repository_owner &&
+      github.event.sender.login == github.repository_owner &&
+      github.event.issue.author_association == 'OWNER' &&
+      contains(github.event.issue.labels.*.name, 'gambar') &&
+      (github.event.action != 'labeled' || github.event.label.name == 'gambar')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # commit the drawing
+      issues: write # comment back + label
+      actions: write # dispatch deploy.yml
+    steps:
+      # ref: main, so a run that waited in the queue starts from today's tip.
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Build the drawing
+        id: build
+        # Through env: only, never `${{ }}` inside run: — see sync-letters.yml.
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_CREATED: ${{ github.event.issue.created_at }}
+        run: node .github/scripts/sync-drawing.mjs
+
+      - name: Commit
+        id: commit
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A src/drawings
+          if git diff --cached --quiet; then
+            echo 'pushed=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git commit -m "drawings: sync from issue #${ISSUE_NUMBER}"
+          # A letter can land on main between the checkout and here. The two
+          # workflows only ever touch their own folders, so replaying this commit
+          # on top is always clean.
+          for attempt in 1 2 3; do
+            git push && break
+            [ "$attempt" -lt 3 ] || exit 1
+            git pull --rebase --quiet origin main
+          done
+          echo 'pushed=true' >> "$GITHUB_OUTPUT"
+
+      # A push made with GITHUB_TOKEN never triggers deploy.yml by itself.
+      - name: Trigger the deploy
+        if: steps.commit.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run deploy.yml --ref main
+
+      - name: Comment and label
+        if: steps.commit.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          DRAWING_ID: ${{ steps.build.outputs.drawing_id }}
+          STROKE_COUNT: ${{ steps.build.outputs.stroke_count }}
+        run: |
+          set -euo pipefail
+          body="Pinned up: https://pawafay.github.io/#/sketchbook/${DRAWING_ID}"
+          body="${body}"$'\n\n'"${STROKE_COUNT:-0} stroke(s). Give the deploy about a minute."
+          gh label create published --color C9A24B --description 'live on the site' || true
+          gh issue edit "$ISSUE_NUMBER" --add-label published || true
+          gh issue comment "$ISSUE_NUMBER" --body "$body"
+
+      - name: Report a failure back to the issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" \
+            --body "Could not pin this one up. Log: ${RUN_URL}" || true
+
+  # The `gambar` label came off: take the drawing back down. Re-adding the label
+  # rebuilds it under the same name, because the date comes from created_at.
+  unpublish:
+    if: >-
+      github.event.action == 'unlabeled' &&
+      github.event.label.name == 'gambar' &&
+      github.event.sender.login == github.repository_owner &&
+      github.event.issue.user.login == github.repository_owner
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      actions: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Remove the drawing
+        id: remove
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: node .github/scripts/unpublish-drawing.mjs
+
+      - name: Commit
+        id: commit
+        if: steps.remove.outputs.removed == 'true'
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A src/drawings
+          if git diff --cached --quiet; then
+            echo 'pushed=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git commit -m "drawings: unpublish issue #${ISSUE_NUMBER}"
+          for attempt in 1 2 3; do
+            git push && break
+            [ "$attempt" -lt 3 ] || exit 1
+            git pull --rebase --quiet origin main
+          done
+          echo 'pushed=true' >> "$GITHUB_OUTPUT"
+
+      - name: Trigger the deploy
+        if: steps.commit.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run deploy.yml --ref main
+
+      - name: Say so on the issue
+        if: steps.commit.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          body='Taken off the site. Add the `gambar` label again to put it back.'
+          body="${body}"$'\n\n'"It is still in this repo's git history, and the repo is public — taking it down is not the same as erasing it."
+          gh issue edit "$ISSUE_NUMBER" --remove-label published || true
+          gh issue comment "$ISSUE_NUMBER" --body "$body"
+
+  # A `gambar` label on an issue that isn't the owner's. GitHub drops labels from
+  # issues opened by people without push access, so this takes a collaborator
+  # labelling someone else's issue. Untrusted input, so: no checkout, no issue
+  # text, just a fixed string.
+  reject:
+    if: >-
+      github.event.action == 'labeled' &&
+      github.event.label.name == 'gambar' &&
+      github.event.issue.user.login != github.repository_owner
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          gh issue close "$ISSUE_NUMBER" --reason 'not planned' \
+            --comment 'This sketchbook only takes drawings sent with a key from the repo owner.'

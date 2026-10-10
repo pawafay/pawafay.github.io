@@ -115,7 +115,14 @@ jobs:
           fi
           # Only the issue number, which is a number. Never the title.
           git commit -m "letters: sync from issue #${ISSUE_NUMBER}"
-          git push
+          # A drawing (sync-drawings.yml) can land on main between the checkout
+          # and here. The two workflows only ever touch their own folders, so
+          # replaying this commit on top is always clean.
+          for attempt in 1 2 3; do
+            git push && break
+            [ "$attempt" -lt 3 ] || exit 1
+            git pull --rebase --quiet origin main
+          done
           echo 'pushed=true' >> "$GITHUB_OUTPUT"
 
       - name: Trigger the deploy
@@ -216,7 +223,11 @@ jobs:
             exit 0
           fi
           git commit -m "letters: unpublish issue #${ISSUE_NUMBER}"
-          git push
+          for attempt in 1 2 3; do
+            git push && break
+            [ "$attempt" -lt 3 ] || exit 1
+            git pull --rebase --quiet origin main
+          done
           echo 'pushed=true' >> "$GITHUB_OUTPUT"
 
       - name: Trigger the deploy

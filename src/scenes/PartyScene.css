@@ -84,6 +84,14 @@
   margin-block-start: clamp(0.5rem, 3vh, 1.75rem);
 }
 
+/* ---- the sketchbook, below the mailbox ---- */
+.party-scene__sketchbook {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-block: clamp(0.25rem, 2vh, 1rem) clamp(0.5rem, 3vh, 1.5rem);
+}
+
 /* ---- pop-up cascade ---- */
 .pop-layer {
   transform-origin: 50% 100%;

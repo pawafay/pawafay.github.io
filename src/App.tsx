@@ -6,7 +6,7 @@ import { useReducedMotionPref } from './hooks/useReducedMotionPref'
 import { useStoryMachine } from './state/useStoryMachine'
 import { StoryStage } from './components/ui/StoryStage'
 import { DarkScene } from './scenes/DarkScene'
-import { parseMailSlug } from './lib/routes'
+import { parseMailSlug, parseSketchRoute } from './lib/routes'
 import { preloadPartyAssets } from './lib/preload'
 
 const PartyScene = lazy(() =>
@@ -19,22 +19,25 @@ function StoryExperience() {
   const audio = useAudio()
   const { phase, flipped } = machine
 
-  const mailSlug = parseMailSlug(useHashRoute())
+  const hash = useHashRoute()
+  // A letter in the mailbox, or anywhere in the sketchbook: both live in the
+  // party, so both want the party up and nothing stacked over them.
+  const partyRoute = parseMailSlug(hash) !== null || parseSketchRoute(hash) !== null
 
   const lit = phase === 'IGNITE' || phase === 'PARTY' || phase === 'LETTER'
   const showDark = phase !== 'PARTY' && phase !== 'LETTER'
   const showParty = phase === 'IGNITE' || phase === 'PARTY' || phase === 'LETTER'
 
-  // Someone followed a link to one specific letter — put them in front of it
-  // rather than at the start of a minute-long intro.
+  // Someone followed a link to one specific letter (or drawing) — put them in
+  // front of it rather than at the start of a minute-long intro.
   useEffect(() => {
-    if (mailSlug && !showParty) machine.skipToParty()
-  }, [mailSlug, showParty, machine])
+    if (partyRoute && !showParty) machine.skipToParty()
+  }, [partyRoute, showParty, machine])
 
-  // Never stack two letters: a mail route wins over the closing envelope.
+  // Never stack two overlays: the route wins over the closing envelope.
   useEffect(() => {
-    if (mailSlug && phase === 'LETTER') machine.closeLetter()
-  }, [mailSlug, phase, machine])
+    if (partyRoute && phase === 'LETTER') machine.closeLetter()
+  }, [partyRoute, phase, machine])
 
   // Audio unlocks here — synchronous, inside the flip gesture (iOS-safe).
   const handleFlip = useCallback(() => {

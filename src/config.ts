@@ -30,6 +30,11 @@ export const config: StoryConfig = {
   //   party is unchanged, and the mailbox keeps working either way. —
   showGreeting: true,
 
+  // — The sketchbook (#/sketchbook): pages drawn on the site, pinned up for
+  //   everyone. Drawing needs a key — see src/drawings/_FORMAT.md. Leave empty
+  //   and the sketchbook disappears from the party entirely. —
+  sketchbookRepo: 'pawafay/pawafay.github.io',
+
   // — Hero photo (centre stage). Omit `heroPhoto` to use the placeholder.
   heroPhoto: 'images/main_photo.jpg',
 

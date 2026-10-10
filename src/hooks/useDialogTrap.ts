@@ -8,13 +8,19 @@ const FOCUSABLE = 'button, a[href], [tabindex]:not([tabindex="-1"])'
  * open, close on Escape, and cycle Tab inside the container instead of escaping
  * into the page behind it. Layout is left to the caller — the closing letter is
  * a centred modal, a mailbox letter takes over the whole screen.
+ *
+ * `active: false` stands the trap down while something on top of it — a sheet
+ * in the sketchbook — runs a trap of its own; otherwise Escape would close both.
  */
 export function useDialogTrap(
   containerRef: RefObject<HTMLElement | null>,
   onClose: () => void,
   initialFocusRef?: RefObject<HTMLElement | null>,
+  active = true,
 ): void {
   useEffect(() => {
+    if (!active) return
+
     // preventScroll, because the letter is opening: the sheet is mid-animation
     // and still translated down the screen, so letting focus scroll its button
     // into view lands the reader a paragraph into a letter they haven't started.
@@ -43,5 +49,5 @@ export function useDialogTrap(
 
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [containerRef, onClose, initialFocusRef])
+  }, [containerRef, onClose, initialFocusRef, active])
 }

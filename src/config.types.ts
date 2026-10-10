@@ -74,6 +74,13 @@ export interface StoryConfig {
    * The mailbox and its letters are separate and stay put either way.
    */
   showGreeting?: boolean
+  /**
+   * The GitHub repo the sketchbook sends drawings to, as 'owner/name' — this
+   * site's own repo, where sync-drawings.yml picks them up. Omit or leave empty
+   * and there is no sketchbook at all. Not a secret; the keys that can post to
+   * it are, and those never go in here (see src/drawings/_FORMAT.md).
+   */
+  sketchbookRepo?: string
   /** Hero photo path under /public; omit → drawn placeholder. */
   heroPhoto?: string
   stickers: StickerConfig[]

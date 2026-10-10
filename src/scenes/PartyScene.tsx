@@ -14,6 +14,9 @@ import { Cake } from '../components/cake/Cake'
 import { Envelope } from '../components/letter/Envelope'
 import { Letter } from '../components/letter/Letter'
 import { Mailbox } from '../components/mailbox/Mailbox'
+import { Sketchbook } from '../components/sketchbook/Sketchbook'
+import { SketchbookShelf } from '../components/sketchbook/SketchbookShelf'
+import { useSketchbookOnWall } from '../components/sketchbook/useSketchbookOnWall'
 import { hasMail } from '../lib/letters'
 import './PartyScene.css'
 
@@ -32,7 +35,12 @@ export function PartyScene({ phase, reduced, openLetter, closeLetter }: PartySce
   // `showGreeting: false` takes the envelope away, and the envelope is the only
   // thing that can open the letter — so the LETTER phase is simply unreachable.
   const showGreeting = config.showGreeting !== false
+  const showSketchbook = useSketchbookOnWall()
   const letterOpen = phase === 'LETTER'
+  // Each layer pops up one step after the last, so the cascade stays gapless
+  // whichever of the optional ones are there.
+  const mailboxStep = showGreeting ? 4 : 3
+  const sketchbookStep = mailboxStep + (hasMail ? 1 : 0)
 
   // Return focus to the envelope when the letter closes.
   useEffect(() => {
@@ -95,19 +103,29 @@ export function PartyScene({ phase, reduced, openLetter, closeLetter }: PartySce
           )}
 
           {hasMail && (
-            // Steps up when there is no envelope above it, so the pop-up
-            // cascade stays gapless.
             <div
               className="party-scene__mailbox pop-layer"
-              style={{ '--i': showGreeting ? 4 : 3 } as CSSProperties}
+              style={{ '--i': mailboxStep } as CSSProperties}
             >
               <Mailbox />
+            </div>
+          )}
+
+          {showSketchbook && (
+            <div
+              className="party-scene__sketchbook pop-layer"
+              style={{ '--i': sketchbookStep } as CSSProperties}
+            >
+              <SketchbookShelf />
             </div>
           )}
         </div>
       </div>
 
       {showGreeting && letterOpen && <Letter onClose={closeLetter} />}
+      {/* Mounted for the whole party, like the mailbox: it shows itself only
+          when the hash points into the sketchbook. */}
+      <Sketchbook />
     </div>
   )
 }

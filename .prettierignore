@@ -16,3 +16,7 @@ public
 # Letters are prose — keep them exactly as they were typed (or committed by the
 # issue-sync workflow), never reflowed.
 src/letters
+
+# Drawings are written by the drawing-sync workflow, one stroke per line on
+# purpose (see .github/scripts/sync-drawing.mjs) — never reflowed.
+src/drawings
