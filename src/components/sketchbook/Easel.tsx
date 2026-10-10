@@ -26,6 +26,7 @@ interface History {
 
 interface Live {
   pointerId: number
+  pointerType: string
   stroke: DrawingStroke
   /** Measured once when the stroke starts — reading layout per point is slow. */
   rect: DOMRect
@@ -48,6 +49,15 @@ function wipe(ctx: CanvasRenderingContext2D): void {
   ctx.save()
   ctx.setTransform(1, 0, 0, 1, 0, 0)
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+  ctx.restore()
+}
+
+/** Puts the ink layer back the way the eraser's snapshot found it. */
+function restore(ctx: CanvasRenderingContext2D, snapshot: HTMLCanvasElement): void {
+  ctx.save()
+  ctx.setTransform(1, 0, 0, 1, 0, 0)
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+  ctx.drawImage(snapshot, 0, 0)
   ctx.restore()
 }
 
@@ -88,6 +98,17 @@ export function Easel({ onClose, onSent }: EaselProps) {
   const historyRef = useRef(history)
   const liveStroke = useRef<Live | null>(null)
   const frame = useRef(0)
+  /**
+   * The eraser's snapshot, reused stroke to stroke. iOS caps how much memory
+   * all of a page's canvases may hold together, and a new page-sized canvas per
+   * eraser stroke can hit that cap on an iPad before the old ones are freed.
+   */
+  const snapshotRef = useRef<HTMLCanvasElement | null>(null)
+  /**
+   * A stylus has drawn on this page. From then on a finger or palm on the paper
+   * is a hand resting on it — as with an Apple Pencil on an iPad — not a stroke.
+   */
+  const penSeen = useRef(false)
 
   const { present } = history
   const used = useMemo(() => pointCount(present), [present])
@@ -117,11 +138,7 @@ export function Easel({ onClose, onSent }: EaselProps) {
     if (live.snapshot) {
       const ctx = inkRef.current?.getContext('2d')
       if (!ctx) return
-      ctx.save()
-      ctx.setTransform(1, 0, 0, 1, 0, 0)
-      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
-      ctx.drawImage(live.snapshot, 0, 0)
-      ctx.restore()
+      restore(ctx, live.snapshot)
       paintPartial(ctx, live.stroke, count)
     } else {
       const ctx = liveRef.current?.getContext('2d')
@@ -142,13 +159,7 @@ export function Easel({ onClose, onSent }: EaselProps) {
 
     const ctx = inkRef.current?.getContext('2d')
     if (ctx) {
-      if (live.snapshot) {
-        ctx.save()
-        ctx.setTransform(1, 0, 0, 1, 0, 0)
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
-        ctx.drawImage(live.snapshot, 0, 0)
-        ctx.restore()
-      }
+      if (live.snapshot) restore(ctx, live.snapshot)
       paintStroke(ctx, live.stroke)
     }
     const { past, present: now } = historyRef.current
@@ -172,7 +183,43 @@ export function Easel({ onClose, onSent }: EaselProps) {
     return () => observer.disconnect()
   }, [finishStroke, repaint])
 
-  useEffect(() => () => cancelAnimationFrame(frame.current), [])
+  /** Takes back the stroke under way without keeping any of it. */
+  const dropStroke = () => {
+    cancelAnimationFrame(frame.current)
+    frame.current = 0
+    const live = liveStroke.current
+    liveStroke.current = null
+    const liveCtx = liveRef.current?.getContext('2d')
+    if (liveCtx) wipe(liveCtx)
+    const ctx = inkRef.current?.getContext('2d')
+    if (ctx && live?.snapshot) restore(ctx, live.snapshot)
+  }
+
+  useEffect(
+    () => () => {
+      cancelAnimationFrame(frame.current)
+      // Zero-sized, iOS hands its memory back now rather than at the next GC.
+      const snapshot = snapshotRef.current
+      if (snapshot) snapshot.width = snapshot.height = 0
+    },
+    [],
+  )
+
+  // touch-action and user-select keep the paper still, but some iOS versions
+  // still raise the magnifying loupe or start a text selection on a long press.
+  // Cancelling the touches stops that; the pointer events drawing runs on are
+  // dispatched ahead of them, so they're unaffected.
+  useEffect(() => {
+    const paper = paperRef.current
+    if (!paper) return
+    const hold = (e: TouchEvent) => e.preventDefault()
+    paper.addEventListener('touchstart', hold, { passive: false })
+    paper.addEventListener('touchmove', hold, { passive: false })
+    return () => {
+      paper.removeEventListener('touchstart', hold)
+      paper.removeEventListener('touchmove', hold)
+    }
+  }, [])
 
   const addPoint = (e: PointerEvent) => {
     const live = liveStroke.current
@@ -205,8 +252,17 @@ export function Easel({ onClose, onSent }: EaselProps) {
   }
 
   const onPointerDown = (e: ReactPointerEvent<HTMLCanvasElement>) => {
-    if (liveStroke.current || full) return
+    if (full) return
     if (e.pointerType === 'mouse' && e.button !== 0) return
+    if (e.pointerType === 'pen') penSeen.current = true
+    else if (e.pointerType === 'touch' && penSeen.current) return
+    const current = liveStroke.current
+    if (current) {
+      // A palm that landed a moment before the pen: the pen wins, and the
+      // palm's smudge goes.
+      if (e.pointerType === 'pen' && current.pointerType === 'touch') dropStroke()
+      else return
+    }
     e.preventDefault()
     const canvas = e.currentTarget
     try {
@@ -219,14 +275,19 @@ export function Easel({ onClose, onSent }: EaselProps) {
     let snapshot: HTMLCanvasElement | null = null
     const inkCanvas = inkRef.current
     if (tool === 'eraser' && inkCanvas) {
-      snapshot = document.createElement('canvas')
-      snapshot.width = inkCanvas.width
-      snapshot.height = inkCanvas.height
-      snapshot.getContext('2d')?.drawImage(inkCanvas, 0, 0)
+      snapshot = snapshotRef.current ??= document.createElement('canvas')
+      if (snapshot.width !== inkCanvas.width || snapshot.height !== inkCanvas.height) {
+        snapshot.width = inkCanvas.width
+        snapshot.height = inkCanvas.height
+      }
+      const snapshotCtx = snapshot.getContext('2d')
+      snapshotCtx?.clearRect(0, 0, snapshot.width, snapshot.height)
+      snapshotCtx?.drawImage(inkCanvas, 0, 0)
     }
 
     liveStroke.current = {
       pointerId: e.pointerId,
+      pointerType: e.pointerType,
       stroke: {
         tool,
         color: tool === 'eraser' ? '#000000' : ink,

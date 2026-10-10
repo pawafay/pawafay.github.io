@@ -3,6 +3,7 @@ import type { FormEvent, ReactNode, RefObject } from 'react'
 import type { DrawingData, DrawingStroke } from '../../drawings.types'
 import { config } from '../../config'
 import { useDialogTrap } from '../../hooks/useDialogTrap'
+import { useVisibleViewport } from '../../hooks/useVisibleViewport'
 import { LIMITS, PAGE_H, PAGE_W, cleanText } from '../../lib/drawingFormat'
 import type { SendFailure } from '../../lib/github'
 import { SKETCH_LABEL, checkKey, jakartaDate, sendDrawing, sketchRepo } from '../../lib/github'
@@ -42,15 +43,21 @@ interface SheetProps {
  * A card that slides up over whatever is behind it — the page being drawn, or
  * the book. It runs its own focus trap; the parent stands its trap down and
  * marks itself inert while a sheet is open, so Escape and Tab belong here.
+ *
+ * It rides on top of the on-screen keyboard rather than under it, and stays on
+ * screen however far down the book has been scrolled.
  */
 function Sheet({ title, children, onCancel, initialFocusRef }: SheetProps) {
   const titleId = useId()
+  const scrimRef = useRef<HTMLDivElement>(null)
   const sheetRef = useRef<HTMLDivElement>(null)
   useDialogTrap(sheetRef, onCancel, initialFocusRef)
+  useVisibleViewport(scrimRef)
 
   return (
     <div
       className="sketch-sheet-scrim"
+      ref={scrimRef}
       onPointerDown={(e) => {
         if (e.target === e.currentTarget) onCancel()
       }}

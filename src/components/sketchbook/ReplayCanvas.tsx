@@ -103,6 +103,9 @@ export function ReplayCanvas({ strokes, run, reduced }: ReplayCanvasProps) {
     return () => {
       cancelAnimationFrame(frame)
       observer.disconnect()
+      // Every replay makes a new one; zero-sized, iOS frees it now, not at the
+      // next GC — it caps how much canvas memory a page may hold.
+      done.width = done.height = 0
     }
   }, [strokes, run, reduced])
 
