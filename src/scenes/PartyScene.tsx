@@ -39,8 +39,8 @@ export function PartyScene({ phase, reduced, openLetter, closeLetter }: PartySce
   const letterOpen = phase === 'LETTER'
   // Each layer pops up one step after the last, so the cascade stays gapless
   // whichever of the optional ones are there.
-  const mailboxStep = showGreeting ? 4 : 3
-  const sketchbookStep = mailboxStep + (hasMail ? 1 : 0)
+  const sketchbookStep = showGreeting ? 4 : 3
+  const mailboxStep = sketchbookStep + (showSketchbook ? 1 : 0)
 
   // Return focus to the envelope when the letter closes.
   useEffect(() => {
@@ -102,21 +102,21 @@ export function PartyScene({ phase, reduced, openLetter, closeLetter }: PartySce
             </div>
           )}
 
-          {hasMail && (
-            <div
-              className="party-scene__mailbox pop-layer"
-              style={{ '--i': mailboxStep } as CSSProperties}
-            >
-              <Mailbox />
-            </div>
-          )}
-
           {showSketchbook && (
             <div
               className="party-scene__sketchbook pop-layer"
               style={{ '--i': sketchbookStep } as CSSProperties}
             >
               <SketchbookShelf />
+            </div>
+          )}
+
+          {hasMail && (
+            <div
+              className="party-scene__mailbox pop-layer"
+              style={{ '--i': mailboxStep } as CSSProperties}
+            >
+              <Mailbox />
             </div>
           )}
         </div>

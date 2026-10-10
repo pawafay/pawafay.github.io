@@ -76,20 +76,24 @@
   width: min(72vw, 320px);
 }
 
-/* ---- the mailbox ----
-   Full column width, and a clear gap above so the closing envelope still reads
-   as the end of the story rather than the first item in the rack. */
-.party-scene__mailbox {
-  width: 100%;
-  margin-block-start: clamp(0.5rem, 3vh, 1.75rem);
-}
-
-/* ---- the sketchbook, below the mailbox ---- */
+/* ---- the sketchbook, then the mailbox ----
+   Whichever comes first after the closing envelope gets a clear gap above it,
+   so the envelope still reads as the end of the story rather than the first
+   thing on the wall. */
 .party-scene__sketchbook {
   display: flex;
   justify-content: center;
   width: 100%;
-  margin-block: clamp(0.25rem, 2vh, 1rem) clamp(0.5rem, 3vh, 1.5rem);
+  margin-block: clamp(0.5rem, 3vh, 1.75rem) clamp(0.25rem, 2vh, 1rem);
+}
+
+/* Full column width. */
+.party-scene__mailbox {
+  width: 100%;
+  margin-block: clamp(0.5rem, 3vh, 1.75rem) clamp(0.5rem, 3vh, 1.5rem);
+}
+.party-scene__sketchbook + .party-scene__mailbox {
+  margin-block-start: 0;
 }
 
 /* ---- pop-up cascade ---- */
