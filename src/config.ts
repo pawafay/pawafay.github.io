@@ -33,7 +33,7 @@ export const config: StoryConfig = {
   // — The mailbox: the rack of letters at the foot of the party.
   //   false → it's gone from the page. A link you send to one letter still
   //   opens that letter, and new letters keep publishing for when it's back. —
-  showMailbox: true,
+  showMailbox: false,
 
   // — The sketchbook (#/sketchbook): pages drawn on the site, pinned up for
   //   everyone. Drawing needs a key — see src/drawings/_FORMAT.md. Leave empty
@@ -41,7 +41,7 @@ export const config: StoryConfig = {
   sketchbookRepo: 'pawafay/pawafay.github.io',
   // ↓ How pages are signed when drawn with your own GitHub key, pasted as it
   //   is. Pawa's pages are signed with the name locked in with her phrase. —
-  sketchbookOwnerName: 'someone 😼',
+  sketchbookOwnerName: '😼',
 
   // — Hero photo (centre stage). Omit `heroPhoto` to use the placeholder.
   heroPhoto: 'images/main_photo.jpg',
@@ -67,7 +67,7 @@ export const config: StoryConfig = {
     ],
     signoff: 'With love,',
     // ↓ YOUR name — the handwritten signature at the bottom of the letter.
-    signature: 'someone 😼',
+    signature: '😼',
   },
 
   // — Scattered memory stickers. Add `src` to use a real photo; omit for a
