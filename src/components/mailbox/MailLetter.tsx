@@ -17,6 +17,8 @@ const TAPES: TapeStyle[] = ['single', 'cross', 'tack']
 interface MailLetterProps {
   letter: LetterEntry
   onClose: () => void
+  /** Where the back button says it goes. */
+  backTo?: string
 }
 
 /**
@@ -27,7 +29,7 @@ interface MailLetterProps {
  * interruption of something else. The keyboard contract is shared with it via
  * useDialogTrap so both behave identically for Esc, Tab and initial focus.
  */
-export function MailLetter({ letter, onClose }: MailLetterProps) {
+export function MailLetter({ letter, onClose, backTo = 'the mailbox' }: MailLetterProps) {
   const sheetRef = useRef<HTMLDivElement>(null)
   const backRef = useRef<HTMLButtonElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -89,7 +91,7 @@ export function MailLetter({ letter, onClose }: MailLetterProps) {
         >
           <div className="mail-letter__sheet">
             <button type="button" ref={backRef} className="mail-letter__back" onClick={onClose}>
-              <span aria-hidden="true">‹</span> back to the mailbox
+              <span aria-hidden="true">‹</span> back to {backTo}
             </button>
 
             {/* The ruled surface, and where the writing starts: the ruling is

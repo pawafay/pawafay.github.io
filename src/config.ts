@@ -30,6 +30,11 @@ export const config: StoryConfig = {
   //   party is unchanged, and the mailbox keeps working either way. —
   showGreeting: true,
 
+  // — The mailbox: the rack of letters at the foot of the party.
+  //   false → it's gone from the page. A link you send to one letter still
+  //   opens that letter, and new letters keep publishing for when it's back. —
+  showMailbox: true,
+
   // — The sketchbook (#/sketchbook): pages drawn on the site, pinned up for
   //   everyone. Drawing needs a key — see src/drawings/_FORMAT.md. Leave empty
   //   and the sketchbook disappears from the party entirely. —

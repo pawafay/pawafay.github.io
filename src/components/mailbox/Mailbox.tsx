@@ -14,8 +14,16 @@ const READ_KEY = 'kotak-pos:read:v1'
 /** slug → the ms timestamp it was first opened at. */
 type ReadMap = Record<string, number>
 
+interface MailboxProps {
+  /**
+   * false → no rack on the page, only the letter a link points at. That is
+   * what `showMailbox: false` leaves behind.
+   */
+  rack?: boolean
+}
+
 /** The rack of letters at the foot of the party, and whichever one is open. */
-export function Mailbox() {
+export function Mailbox({ rack = true }: MailboxProps) {
   const activeSlug = parseMailSlug(useHashRoute())
   const active = findLetter(activeSlug)
   const [read, setRead] = useLocalStorage<ReadMap>(READ_KEY, {})
@@ -70,6 +78,10 @@ export function Mailbox() {
   }, [activeSlug])
 
   if (!hasMail) return null
+
+  // The letter is a portal, so it needs nothing of the rack around it.
+  if (!rack)
+    return active ? <MailLetter letter={active} onClose={close} backTo="the party" /> : null
 
   const problems = import.meta.env.DEV ? letterProblems : []
   const unread = letters.reduce((n, letter) => (read[letter.slug] ? n : n + 1), 0)

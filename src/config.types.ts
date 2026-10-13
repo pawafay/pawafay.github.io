@@ -71,9 +71,18 @@ export interface StoryConfig {
    * note it opens (the `greeting` block below). `false` hides both, leaving the
    * rest of the party untouched. Defaults to `true`.
    *
-   * The mailbox and its letters are separate and stay put either way.
+   * The mailbox and its letters are separate — see `showMailbox`.
    */
   showGreeting?: boolean
+  /**
+   * The mailbox — the rack of letters at the foot of the party. `false` takes
+   * it off the page entirely. Defaults to `true`.
+   *
+   * Only the rack goes: a link straight to one letter (#/mail/<slug>) still
+   * opens it, and letters written while it is hidden keep publishing, ready for
+   * when it comes back.
+   */
+  showMailbox?: boolean
   /**
    * The GitHub repo the sketchbook sends drawings to, as 'owner/name' — this
    * site's own repo, where sync-drawings.yml picks them up. Omit or leave empty

@@ -36,6 +36,7 @@ export function PartyScene({ phase, reduced, openLetter, closeLetter }: PartySce
   // thing that can open the letter — so the LETTER phase is simply unreachable.
   const showGreeting = config.showGreeting !== false
   const showSketchbook = useSketchbookOnWall()
+  const showMailbox = config.showMailbox !== false
   const letterOpen = phase === 'LETTER'
   // Each layer pops up one step after the last, so the cascade stays gapless
   // whichever of the optional ones are there.
@@ -111,7 +112,7 @@ export function PartyScene({ phase, reduced, openLetter, closeLetter }: PartySce
             </div>
           )}
 
-          {hasMail && (
+          {hasMail && showMailbox && (
             <div
               className="party-scene__mailbox pop-layer"
               style={{ '--i': mailboxStep } as CSSProperties}
@@ -123,6 +124,9 @@ export function PartyScene({ phase, reduced, openLetter, closeLetter }: PartySce
       </div>
 
       {showGreeting && letterOpen && <Letter onClose={closeLetter} />}
+      {/* `showMailbox: false` hides the rack, but a link to one letter still
+          opens it. */}
+      {hasMail && !showMailbox && <Mailbox rack={false} />}
       {/* Mounted for the whole party, like the mailbox: it shows itself only
           when the hash points into the sketchbook. */}
       <Sketchbook />
